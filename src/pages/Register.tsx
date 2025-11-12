@@ -72,10 +72,20 @@ const Register = () => {
 
       toast({
         title: "Registration successful!",
-        description: "Welcome to Holiday House Sitters. Your account is pending verification.",
+        description: "Redirecting to payment...",
       });
 
-      navigate("/dashboard");
+      // Create checkout session
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+        "create-checkout"
+      );
+
+      if (checkoutError) throw checkoutError;
+
+      // Redirect to Stripe checkout
+      if (checkoutData?.url) {
+        window.location.href = checkoutData.url;
+      }
     } catch (error: any) {
       toast({
         title: "Registration failed",

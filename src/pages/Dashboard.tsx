@@ -17,10 +17,16 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     verifiedUsers: 0,
+    paidUsers: 0,
+    pendingVerification: 0,
     totalBookings: 0,
     pendingBookings: 0,
+    confirmedBookings: 0,
+    activeListings: 0,
+    homeowners: 0,
+    sitters: 0,
+    recentBookings: [] as any[],
   });
-  const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -53,29 +59,14 @@ const Dashboard = () => {
     };
 
     const fetchAdminStats = async () => {
-      // Fetch total users
-      const { count: totalUsers } = await supabase
+      if (role !== "admin") return;
+
+      // Fetch all profiles
+      const { data: profilesData } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true });
+        .select("*");
 
-      // Fetch verified users
-      const { count: verifiedUsers } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("is_verified", true);
-
-      // Fetch total bookings
-      const { count: totalBookings } = await supabase
-        .from("bookings")
-        .select("*", { count: "exact", head: true });
-
-      // Fetch pending bookings
-      const { count: pendingBookings } = await supabase
-        .from("bookings")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
-
-      // Fetch recent bookings with details
+      // Fetch all bookings with listing details
       const { data: bookingsData } = await supabase
         .from("bookings")
         .select(`
@@ -86,14 +77,32 @@ const Dashboard = () => {
         .order("created_at", { ascending: false })
         .limit(5);
 
-      setStats({
-        totalUsers: totalUsers || 0,
-        verifiedUsers: verifiedUsers || 0,
-        totalBookings: totalBookings || 0,
-        pendingBookings: pendingBookings || 0,
-      });
+      // Fetch listings
+      const { data: listingsData } = await supabase
+        .from("listings")
+        .select("*");
 
-      setRecentBookings(bookingsData || []);
+      // Count homeowners and sitters
+      const { data: rolesData } = await supabase
+        .from("user_roles")
+        .select("*");
+
+      const homeowners = rolesData?.filter((r) => r.role === "homeowner").length || 0;
+      const sitters = rolesData?.filter((r) => r.role === "sitter").length || 0;
+
+      setStats({
+        totalUsers: profilesData?.length || 0,
+        verifiedUsers: profilesData?.filter((u) => u.is_verified).length || 0,
+        paidUsers: profilesData?.filter((u) => u.is_paid).length || 0,
+        pendingVerification: profilesData?.filter((u) => !u.is_verified).length || 0,
+        totalBookings: bookingsData?.length || 0,
+        pendingBookings: bookingsData?.filter((b) => b.status === "pending").length || 0,
+        confirmedBookings: bookingsData?.filter((b) => b.status === "accepted").length || 0,
+        activeListings: listingsData?.filter((l) => l.status === "active").length || 0,
+        homeowners,
+        sitters,
+        recentBookings: bookingsData || [],
+      });
     };
 
     checkAuth();
@@ -149,13 +158,13 @@ const Dashboard = () => {
             <div className="grid md:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <CardTitle className="text-sm font-medium">Total Registered</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalUsers}</div>
                   <p className="text-xs text-muted-foreground">
-                    Registered members
+                    All users
                   </p>
                 </CardContent>
               </Card>
@@ -168,34 +177,81 @@ const Dashboard = () => {
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.verifiedUsers}</div>
                   <p className="text-xs text-muted-foreground">
-                    Verified members
+                    Completed verification
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+                  <CardTitle className="text-sm font-medium">Paid Members</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.paidUsers}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Active subscriptions
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalBookings}</div>
+                  <div className="text-2xl font-bold">{stats.activeListings}</div>
                   <p className="text-xs text-muted-foreground">
-                    All time bookings
+                    Available opportunities
                   </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* User Activity */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Booking Statistics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Total Bookings</span>
+                      <span className="font-bold">{stats.totalBookings}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Pending</span>
+                      <span className="font-bold text-yellow-600">{stats.pendingBookings}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Accepted</span>
+                      <span className="font-bold text-green-600">{stats.confirmedBookings}</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                <CardHeader>
+                  <CardTitle>User Activity</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.pendingBookings}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Awaiting approval
-                  </p>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Homeowners</span>
+                      <span className="font-bold">{stats.homeowners}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">House Sitters</span>
+                      <span className="font-bold">{stats.sitters}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Pending Verification</span>
+                      <span className="font-bold text-orange-600">{stats.pendingVerification}</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -203,12 +259,12 @@ const Dashboard = () => {
             {/* Recent Bookings */}
             <Card>
               <CardHeader>
-                <CardTitle>Recent Bookings</CardTitle>
+                <CardTitle>Recent Booking Activity</CardTitle>
               </CardHeader>
               <CardContent>
-                {recentBookings.length > 0 ? (
+                {stats.recentBookings.length > 0 ? (
                   <div className="space-y-4">
-                    {recentBookings.map((booking) => (
+                    {stats.recentBookings.map((booking) => (
                       <div key={booking.id} className="flex items-center justify-between border-b pb-4 last:border-0">
                         <div className="space-y-1">
                           <p className="font-medium">{booking.listing?.title}</p>
@@ -221,7 +277,7 @@ const Dashboard = () => {
                         </div>
                         <div className="text-right">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                            booking.status === 'accepted' ? 'bg-green-100 text-green-800' :
                             booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
