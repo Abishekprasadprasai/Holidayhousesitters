@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import logo from "@/assets/logo.png";
 
 export const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,9 +25,9 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-          <Home className="h-6 w-6 text-primary" />
-          <span className="bg-gradient-primary bg-clip-text text-transparent">
+        <Link to="/" className="flex items-center gap-3">
+          <img src={logo} alt="Holiday House Sitters" className="h-10 w-auto" />
+          <span className="font-bold text-lg bg-gradient-primary bg-clip-text text-transparent hidden sm:inline">
             Holiday House Sitters
           </span>
         </Link>

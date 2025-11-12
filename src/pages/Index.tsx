@@ -3,8 +3,8 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Shield, Heart, Users, CheckCircle2, Home as HomeIcon, PawPrint } from "lucide-react";
-import heroImage from "@/assets/hero-home.jpg";
+import { Shield, Heart, Users, CheckCircle2 } from "lucide-react";
+import { ClientPhotosCarousel } from "@/components/ClientPhotosCarousel";
 
 const Index = () => {
   return (
@@ -37,13 +37,7 @@ const Index = () => {
                   </Link>
                 </div>
               </div>
-              <div className="relative rounded-2xl overflow-hidden shadow-large">
-                <img 
-                  src={heroImage} 
-                  alt="Happy pets at home" 
-                  className="w-full h-[400px] object-cover"
-                />
-              </div>
+              <ClientPhotosCarousel />
             </div>
           </div>
         </section>

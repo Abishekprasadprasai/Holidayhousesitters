@@ -161,7 +161,6 @@ export type Database = {
           ndis_certified: boolean | null
           phone: string | null
           photo_url: string | null
-          role: Database["public"]["Enums"]["app_role"]
           skills: string[] | null
           updated_at: string | null
           user_id: string
@@ -181,7 +180,6 @@ export type Database = {
           ndis_certified?: boolean | null
           phone?: string | null
           photo_url?: string | null
-          role: Database["public"]["Enums"]["app_role"]
           skills?: string[] | null
           updated_at?: string | null
           user_id: string
@@ -201,12 +199,32 @@ export type Database = {
           ndis_certified?: boolean | null
           phone?: string | null
           photo_url?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
           skills?: string[] | null
           updated_at?: string | null
           user_id?: string
           verification_date?: string | null
           verified_by_admin_id?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -242,7 +260,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "homeowner" | "sitter"

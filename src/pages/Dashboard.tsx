@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -62,7 +64,7 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  if (isLoading) {
+  if (isLoading || roleLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
@@ -76,7 +78,7 @@ const Dashboard = () => {
             <div>
               <h1 className="text-3xl font-bold">Welcome, {profile?.name}!</h1>
               <p className="text-muted-foreground mt-2">
-                Role: <span className="capitalize font-medium">{profile?.role}</span>
+                Role: <span className="capitalize font-medium">{role}</span>
               </p>
             </div>
             <Button variant="outline" onClick={handleLogout}>
@@ -126,7 +128,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {profile?.role === "homeowner" && (
+            {role === "homeowner" && (
               <Card>
                 <CardHeader>
                   <CardTitle>Post a Listing</CardTitle>
@@ -148,7 +150,7 @@ const Dashboard = () => {
               </Card>
             )}
 
-            {profile?.role === "sitter" && (
+            {role === "sitter" && (
               <Card>
                 <CardHeader>
                   <CardTitle>Find Sits</CardTitle>
