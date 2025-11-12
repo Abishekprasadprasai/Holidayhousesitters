@@ -7,12 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
+import { Users, Calendar, CheckCircle, Clock } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    verifiedUsers: 0,
+    totalBookings: 0,
+    pendingBookings: 0,
+  });
+  const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -44,11 +52,60 @@ const Dashboard = () => {
       setIsLoading(false);
     };
 
+    const fetchAdminStats = async () => {
+      // Fetch total users
+      const { count: totalUsers } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+
+      // Fetch verified users
+      const { count: verifiedUsers } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("is_verified", true);
+
+      // Fetch total bookings
+      const { count: totalBookings } = await supabase
+        .from("bookings")
+        .select("*", { count: "exact", head: true });
+
+      // Fetch pending bookings
+      const { count: pendingBookings } = await supabase
+        .from("bookings")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+
+      // Fetch recent bookings with details
+      const { data: bookingsData } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          sitter:profiles!bookings_sitter_id_fkey(name),
+          listing:listings(title, location)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      setStats({
+        totalUsers: totalUsers || 0,
+        verifiedUsers: verifiedUsers || 0,
+        totalBookings: totalBookings || 0,
+        pendingBookings: pendingBookings || 0,
+      });
+
+      setRecentBookings(bookingsData || []);
+    };
+
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
         navigate("/login");
+      } else if (session?.user) {
+        // Fetch admin stats after auth state changes
+        setTimeout(() => {
+          fetchAdminStats();
+        }, 0);
       }
     });
 
@@ -68,6 +125,129 @@ const Dashboard = () => {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
+  // Admin Dashboard View
+  if (role === "admin") {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        
+        <main className="flex-1 container py-12">
+          <div className="max-w-7xl mx-auto space-y-8">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+                <p className="text-muted-foreground mt-2">
+                  Welcome back, {profile?.name}
+                </p>
+              </div>
+              <Button variant="outline" onClick={handleLogout}>
+                Log Out
+              </Button>
+            </div>
+
+            {/* Stats Overview */}
+            <div className="grid md:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Registered members
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Verified Users</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.verifiedUsers}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Verified members
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalBookings}</div>
+                  <p className="text-xs text-muted-foreground">
+                    All time bookings
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.pendingBookings}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Awaiting approval
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Bookings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Bookings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentBookings.length > 0 ? (
+                  <div className="space-y-4">
+                    {recentBookings.map((booking) => (
+                      <div key={booking.id} className="flex items-center justify-between border-b pb-4 last:border-0">
+                        <div className="space-y-1">
+                          <p className="font-medium">{booking.listing?.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Sitter: {booking.sitter?.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Location: {booking.listing?.location}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                            booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {booking.status}
+                          </span>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(booking.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">No bookings yet</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
+  // Regular User Dashboard View
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

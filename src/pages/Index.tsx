@@ -91,6 +91,9 @@ const Index = () => {
           <div className="container">
             <div className="text-center mb-16">
               <h2 className="text-3xl lg:text-4xl font-bold mb-4">How It Works</h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                We connect trusted homeowners with reliable house sitters through a secure, verified platform
+              </p>
             </div>
 
             <div className="max-w-4xl mx-auto space-y-12">
@@ -99,9 +102,9 @@ const Index = () => {
                   1
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Create Your Profile</h3>
+                  <h3 className="text-xl font-semibold mb-2">Register & Submit Documents</h3>
                   <p className="text-muted-foreground">
-                    Sign up as a homeowner or sitter and complete your profile with photos and details
+                    Create your account and upload your Australian driver's license or passport. Choose whether you're a homeowner looking for a sitter or a sitter seeking opportunities.
                   </p>
                 </div>
               </div>
@@ -111,9 +114,9 @@ const Index = () => {
                   2
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Get Verified</h3>
+                  <h3 className="text-xl font-semibold mb-2">Personal Verification Process</h3>
                   <p className="text-muted-foreground">
-                    Our team personally verifies your identity and conducts a phone interview
+                    Our team reviews your documents and conducts a personal phone interview to verify your identity and suitability. We take security seriously to protect our community.
                   </p>
                 </div>
               </div>
@@ -123,9 +126,21 @@ const Index = () => {
                   3
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Connect & Arrange</h3>
+                  <h3 className="text-xl font-semibold mb-2">Complete Your Membership</h3>
                   <p className="text-muted-foreground">
-                    Browse listings or applications, message each other, and arrange your perfect house sit
+                    Pay the annual membership fee of $75 (with 20% supporting local animal charities). Once verified and paid, you're ready to connect with our community.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-6 items-start">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-white font-bold">
+                  4
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Connect & Arrange Your Sit</h3>
+                  <p className="text-muted-foreground">
+                    Homeowners post listings, sitters browse and apply. Message directly, discuss requirements, and arrange the perfect house sitting experience for everyone involved.
                   </p>
                 </div>
               </div>

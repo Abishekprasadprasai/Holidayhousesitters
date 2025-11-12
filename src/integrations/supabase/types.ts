@@ -152,6 +152,7 @@ export type Database = {
           bio: string | null
           certificates: string[] | null
           created_at: string | null
+          document_url: string | null
           experience: string | null
           id: string
           is_paid: boolean | null
@@ -171,6 +172,7 @@ export type Database = {
           bio?: string | null
           certificates?: string[] | null
           created_at?: string | null
+          document_url?: string | null
           experience?: string | null
           id?: string
           is_paid?: boolean | null
@@ -190,6 +192,7 @@ export type Database = {
           bio?: string | null
           certificates?: string[] | null
           created_at?: string | null
+          document_url?: string | null
           experience?: string | null
           id?: string
           is_paid?: boolean | null

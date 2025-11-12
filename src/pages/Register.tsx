@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Upload } from "lucide-react";
 
 const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,15 +17,27 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"homeowner" | "sitter">("sitter");
+  const [document, setDocument] = useState<File | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!document) {
+      toast({
+        title: "Document required",
+        description: "Please upload your Australian driver's license or passport",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -36,14 +49,33 @@ const Register = () => {
         },
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Registration failed");
+
+      // Upload identity document
+      const fileExt = document.name.split('.').pop();
+      const filePath = `${authData.user.id}/identity.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('identity-documents')
+        .upload(filePath, document);
+
+      if (uploadError) throw uploadError;
+
+      // Update profile with document URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ document_url: filePath })
+        .eq('user_id', authData.user.id);
+
+      if (updateError) throw updateError;
 
       toast({
         title: "Registration successful!",
-        description: "Welcome to Holiday House Sitters. Please complete your profile.",
+        description: "Welcome to Holiday House Sitters. Your account is pending verification.",
       });
 
-      navigate("/profile/edit");
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         title: "Registration failed",
@@ -121,6 +153,29 @@ const Register = () => {
                     </Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="document">Identity Document *</Label>
+                <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
+                  <Input
+                    id="document"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => setDocument(e.target.files?.[0] || null)}
+                    className="hidden"
+                    required
+                  />
+                  <label htmlFor="document" className="cursor-pointer">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm font-medium">
+                      {document ? document.name : "Upload Australian Driver's License or Passport"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PDF, JPG, or PNG (max 5MB)
+                    </p>
+                  </label>
+                </div>
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
