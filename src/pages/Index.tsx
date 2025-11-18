@@ -19,7 +19,7 @@ const Index = () => {
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="text-white space-y-6">
                 <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
-                  Find Trusted House & Pet Sitters
+                  Reliable Holiday Housesitter
                 </h1>
                 <p className="text-xl text-white/90">
                   Connect with verified, caring sitters for your home and beloved pets. Peace of mind while you're away.
