@@ -3,7 +3,7 @@ import clientPhoto1 from '@/assets/client-photo-1.jpg';
 import clientPhoto2 from '@/assets/client-photo-2.jpg';
 import clientPhoto3 from '@/assets/client-photo-3.jpg';
 
-const photos = [clientPhoto1, clientPhoto2, clientPhoto3];
+const photos = [clientPhoto1, clientPhoto3];
 
 export const ClientPhotosCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -27,7 +27,7 @@ export const ClientPhotosCarousel = () => {
         >
           <img
             src={photo}
-            alt={`Happy client with their pet ${index + 1}`}
+            alt={index === 0 ? 'Happy dogs enjoying playtime together' : `Happy client with their pet ${index + 1}`}
             className="w-full h-full object-cover"
           />
         </div>
