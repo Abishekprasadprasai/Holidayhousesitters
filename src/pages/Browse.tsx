@@ -17,6 +17,40 @@ const Browse = () => {
   const [sitters, setSitters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [applyingTo, setApplyingTo] = useState<string | null>(null);
+
+  const handleApplyToListing = async (listingId: string) => {
+    setApplyingTo(listingId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      const { error } = await supabase.from("bookings").insert({
+        listing_id: listingId,
+        sitter_id: user.id,
+        status: "pending",
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Application Sent!",
+        description: "Your application has been sent to the homeowner.",
+      });
+    } catch (error: any) {
+      console.error("Error applying to listing:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setApplyingTo(null);
+    }
+  };
 
   useEffect(() => {
     const loadUserAndData = async () => {
@@ -230,7 +264,20 @@ const Browse = () => {
                       <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
                         {listing.description}
                       </p>
-                      <Button className="w-full">Apply Now</Button>
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleApplyToListing(listing.id)}
+                        disabled={applyingTo === listing.id}
+                      >
+                        {applyingTo === listing.id ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Applying...
+                          </>
+                        ) : (
+                          "Apply Now"
+                        )}
+                      </Button>
                     </CardContent>
                   </Card>
                 ))
