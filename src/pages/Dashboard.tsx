@@ -741,25 +741,44 @@ const Dashboard = () => {
             </Card>
 
             {role === "homeowner" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Post a Listing</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {profile?.is_verified && profile?.is_paid 
-                      ? "Create a new house sitting opportunity"
-                      : "Complete verification and payment to post listings"}
-                  </p>
-                  <Button 
-                    className="w-full" 
-                    disabled={!profile?.is_verified || !profile?.is_paid}
-                    onClick={() => navigate("/listings/new")}
-                  >
-                    Create Listing
-                  </Button>
-                </CardContent>
-              </Card>
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Post a Listing</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {profile?.is_verified && profile?.is_paid 
+                        ? "Create a new house sitting opportunity"
+                        : "Complete verification and payment to post listings"}
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      disabled={!profile?.is_verified || !profile?.is_paid}
+                      onClick={() => navigate("/listings/new")}
+                    >
+                      Create Listing
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>My Listings</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      View and manage your listings and applicants
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => navigate("/my-listings")}
+                    >
+                      View My Listings
+                    </Button>
+                  </CardContent>
+                </Card>
+              </>
             )}
 
             {role === "sitter" && (
