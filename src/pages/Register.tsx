@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -10,27 +10,20 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload } from "lucide-react";
+import { z } from "zod";
+
+const ADMIN_CODE = "8823";
 
 const Register = () => {
-  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"homeowner" | "sitter" | "admin">("sitter");
+  const [adminCode, setAdminCode] = useState("");
   const [document, setDocument] = useState<File | null>(null);
-  const [isAdminSignup, setIsAdminSignup] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Check if admin signup URL parameter is present
-    const adminParam = searchParams.get("admin");
-    if (adminParam === "true") {
-      setIsAdminSignup(true);
-      setRole("admin");
-    }
-  }, [searchParams]);
 
   // Test mode flag - set to true to bypass Stripe payment
   const TEST_MODE = true;
@@ -38,10 +31,39 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate admin code if admin role is selected
+    if (role === "admin") {
+      if (adminCode.trim() !== ADMIN_CODE) {
+        toast({
+          title: "Invalid admin code",
+          description: "The admin access code you entered is incorrect.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     if (!document) {
       toast({
         title: "Document required",
         description: "Please upload your Australian driver's license or passport",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Input validation using zod
+    const registrationSchema = z.object({
+      name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
+      email: z.string().trim().email("Invalid email address").max(255, "Email too long"),
+      password: z.string().min(6, "Password must be at least 6 characters").max(100, "Password too long"),
+    });
+
+    const validation = registrationSchema.safeParse({ name, email, password });
+    if (!validation.success) {
+      toast({
+        title: "Validation error",
+        description: validation.error.issues[0].message,
         variant: "destructive",
       });
       return;
@@ -85,7 +107,7 @@ const Register = () => {
       if (updateError) throw updateError;
 
       // Handle admin signup separately
-      if (isAdminSignup && role === "admin") {
+      if (role === "admin") {
         // Submit admin request for manual approval
         const { error: adminRequestError } = await supabase
           .from('pending_admin_requests')
@@ -205,30 +227,45 @@ const Register = () => {
                 <RadioGroup 
                   value={role} 
                   onValueChange={(value: any) => setRole(value)}
-                  disabled={isAdminSignup}
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="sitter" id="sitter" disabled={isAdminSignup} />
+                    <RadioGroupItem value="sitter" id="sitter" />
                     <Label htmlFor="sitter" className="font-normal cursor-pointer">
                       Become a house/pet sitter
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="homeowner" id="homeowner" disabled={isAdminSignup} />
+                    <RadioGroupItem value="homeowner" id="homeowner" />
                     <Label htmlFor="homeowner" className="font-normal cursor-pointer">
                       Find a sitter for my home/pets
                     </Label>
                   </div>
-                  {isAdminSignup && (
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="admin" id="admin" checked />
-                      <Label htmlFor="admin" className="font-normal">
-                        Administrator (Requires Approval)
-                      </Label>
-                    </div>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="admin" id="admin" />
+                    <Label htmlFor="admin" className="font-normal cursor-pointer">
+                      Administrator (Requires Code)
+                    </Label>
+                  </div>
                 </RadioGroup>
               </div>
+
+              {role === "admin" && (
+                <div className="space-y-2">
+                  <Label htmlFor="adminCode">Admin Access Code *</Label>
+                  <Input
+                    id="adminCode"
+                    type="password"
+                    placeholder="Enter admin code"
+                    value={adminCode}
+                    onChange={(e) => setAdminCode(e.target.value)}
+                    required
+                    maxLength={20}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the admin access code to proceed with admin registration
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="document">Identity Document *</Label>
