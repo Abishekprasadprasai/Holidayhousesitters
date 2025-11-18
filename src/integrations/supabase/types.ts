@@ -323,18 +323,7 @@ export type Database = {
       }
     }
     Views: {
-      user_roles_with_names: {
-        Row: {
-          created_at: string | null
-          id: string | null
-          is_paid: boolean | null
-          is_verified: boolean | null
-          name: string | null
-          role: Database["public"]["Enums"]["app_role"] | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_profile_with_privacy: {
@@ -359,6 +348,18 @@ export type Database = {
           user_id: string
           verification_date: string
           verified_by_admin_id: string
+        }[]
+      }
+      get_user_roles_with_names: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          is_paid: boolean
+          is_verified: boolean
+          name: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }[]
       }
       has_role: {
