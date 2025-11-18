@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import ProfileEdit from "./pages/ProfileEdit";
 import AdminVerifyUsers from "./pages/AdminVerifyUsers";
 import CreateListing from "./pages/CreateListing";
+import MyListings from "./pages/MyListings";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/profile/edit" element={<ProfileEdit />} />
           <Route path="/admin/verify-users" element={<AdminVerifyUsers />} />
           <Route path="/listings/new" element={<CreateListing />} />
+          <Route path="/my-listings" element={<MyListings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

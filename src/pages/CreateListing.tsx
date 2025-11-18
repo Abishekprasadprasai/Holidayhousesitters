@@ -57,7 +57,7 @@ const CreateListing = () => {
         description: "Your listing has been created successfully.",
       });
 
-      navigate("/dashboard");
+      navigate("/my-listings");
     } catch (error: any) {
       console.error("Error creating listing:", error);
       toast({
