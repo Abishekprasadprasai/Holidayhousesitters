@@ -323,7 +323,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_roles_with_names: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          is_paid: boolean | null
+          is_verified: boolean | null
+          name: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_profile_with_privacy: {
