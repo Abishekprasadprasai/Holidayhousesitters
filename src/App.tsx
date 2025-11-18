@@ -13,6 +13,7 @@ import HowItWorks from "./pages/HowItWorks";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Browse from "./pages/Browse";
 import NotFound from "./pages/NotFound";
+import ProfileEdit from "./pages/ProfileEdit";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/browse" element={<Browse />} />
+          <Route path="/profile/edit" element={<ProfileEdit />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

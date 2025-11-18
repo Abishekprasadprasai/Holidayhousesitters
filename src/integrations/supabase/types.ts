@@ -149,67 +149,127 @@ export type Database = {
       }
       profiles: {
         Row: {
+          animals_cared_for: string[] | null
+          availability_end: string | null
+          availability_flexible: boolean | null
+          availability_start: string | null
+          average_rating: number | null
+          bedrooms_bathrooms: string | null
           bio: string | null
           certificates: string[] | null
           created_at: string | null
           document_url: string | null
+          emergency_contacts: string | null
+          exercise_requirements: string | null
           experience: string | null
+          house_rules: string | null
           id: string
           is_paid: boolean | null
           is_verified: boolean | null
+          location: string | null
           loyalty_badge: Database["public"]["Enums"]["loyalty_badge"] | null
+          medication_needs: boolean | null
           name: string
           ndis_certified: boolean | null
+          number_of_pets: number | null
+          parking_available: boolean | null
+          pet_care_instructions: string | null
           phone: string | null
           phone_consent: boolean | null
           photo_url: string | null
+          preferred_contact_method: string | null
+          property_features: string[] | null
+          property_type: string | null
+          property_types_cared_for: string[] | null
           skills: string[] | null
           updated_at: string | null
           user_id: string
           verification_date: string | null
           verified_by_admin_id: string | null
+          wifi_available: boolean | null
+          years_experience: string | null
         }
         Insert: {
+          animals_cared_for?: string[] | null
+          availability_end?: string | null
+          availability_flexible?: boolean | null
+          availability_start?: string | null
+          average_rating?: number | null
+          bedrooms_bathrooms?: string | null
           bio?: string | null
           certificates?: string[] | null
           created_at?: string | null
           document_url?: string | null
+          emergency_contacts?: string | null
+          exercise_requirements?: string | null
           experience?: string | null
+          house_rules?: string | null
           id?: string
           is_paid?: boolean | null
           is_verified?: boolean | null
+          location?: string | null
           loyalty_badge?: Database["public"]["Enums"]["loyalty_badge"] | null
+          medication_needs?: boolean | null
           name: string
           ndis_certified?: boolean | null
+          number_of_pets?: number | null
+          parking_available?: boolean | null
+          pet_care_instructions?: string | null
           phone?: string | null
           phone_consent?: boolean | null
           photo_url?: string | null
+          preferred_contact_method?: string | null
+          property_features?: string[] | null
+          property_type?: string | null
+          property_types_cared_for?: string[] | null
           skills?: string[] | null
           updated_at?: string | null
           user_id: string
           verification_date?: string | null
           verified_by_admin_id?: string | null
+          wifi_available?: boolean | null
+          years_experience?: string | null
         }
         Update: {
+          animals_cared_for?: string[] | null
+          availability_end?: string | null
+          availability_flexible?: boolean | null
+          availability_start?: string | null
+          average_rating?: number | null
+          bedrooms_bathrooms?: string | null
           bio?: string | null
           certificates?: string[] | null
           created_at?: string | null
           document_url?: string | null
+          emergency_contacts?: string | null
+          exercise_requirements?: string | null
           experience?: string | null
+          house_rules?: string | null
           id?: string
           is_paid?: boolean | null
           is_verified?: boolean | null
+          location?: string | null
           loyalty_badge?: Database["public"]["Enums"]["loyalty_badge"] | null
+          medication_needs?: boolean | null
           name?: string
           ndis_certified?: boolean | null
+          number_of_pets?: number | null
+          parking_available?: boolean | null
+          pet_care_instructions?: string | null
           phone?: string | null
           phone_consent?: boolean | null
           photo_url?: string | null
+          preferred_contact_method?: string | null
+          property_features?: string[] | null
+          property_type?: string | null
+          property_types_cared_for?: string[] | null
           skills?: string[] | null
           updated_at?: string | null
           user_id?: string
           verification_date?: string | null
           verified_by_admin_id?: string | null
+          wifi_available?: boolean | null
+          years_experience?: string | null
         }
         Relationships: []
       }
