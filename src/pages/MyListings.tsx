@@ -149,8 +149,8 @@ const MyListings = () => {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => navigate("/")}>
-                Go Back to Home
+              <Button variant="outline" onClick={() => navigate("/dashboard")}>
+                Go Back to Dashboard
               </Button>
               <Button onClick={() => navigate("/listings/new")}>
                 Create New Listing

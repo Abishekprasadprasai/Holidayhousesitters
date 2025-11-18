@@ -9,7 +9,8 @@ import logo from "@/assets/logo.png";
 export const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { role } = useUserRole();
-
+  const isAuthenticated = !!role;
+ 
   const NavLinks = () => (
     <>
       <Link to="/how-it-works" className="text-foreground hover:text-primary transition-colors">
@@ -43,12 +44,20 @@ export const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <NavLinks />
-          <Link to="/login">
-            <Button variant="ghost">Log In</Button>
-          </Link>
-          <Link to="/register">
-            <Button>Join Now</Button>
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/dashboard">
+              <Button variant="ghost">Dashboard</Button>
+            </Link>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="ghost">Log In</Button>
+              </Link>
+              <Link to="/register">
+                <Button>Join Now</Button>
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* Mobile Navigation */}
@@ -61,12 +70,20 @@ export const Header = () => {
           <SheetContent>
             <nav className="flex flex-col gap-4 mt-8">
               <NavLinks />
-              <Link to="/login" onClick={() => setIsOpen(false)}>
-                <Button variant="ghost" className="w-full">Log In</Button>
-              </Link>
-              <Link to="/register" onClick={() => setIsOpen(false)}>
-                <Button className="w-full">Join Now</Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                  <Button variant="ghost" className="w-full">Dashboard</Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <Button variant="ghost" className="w-full">Log In</Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full">Join Now</Button>
+                  </Link>
+                </>
+              )}
             </nav>
           </SheetContent>
         </Sheet>
