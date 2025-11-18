@@ -118,7 +118,7 @@ const AdminVerifyUsers = () => {
         .insert({
           user_id: userId,
           admin_id: admin.id,
-          method: "manual_review",
+          method: "in-person",
           notes: "User verified by admin through verification panel",
         });
 
