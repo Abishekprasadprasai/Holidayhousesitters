@@ -147,6 +147,36 @@ export type Database = {
           },
         ]
       }
+      pending_admin_requests: {
+        Row: {
+          id: string
+          notes: string | null
+          requested_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          notes?: string | null
+          requested_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          notes?: string | null
+          requested_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           animals_cared_for: string[] | null
@@ -326,6 +356,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_admin_request: {
+        Args: { request_id: string }
+        Returns: undefined
+      }
       get_profile_with_privacy: {
         Args: { profile_user_id: string }
         Returns: {
@@ -368,6 +402,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      reject_admin_request: {
+        Args: { rejection_notes?: string; request_id: string }
+        Returns: undefined
       }
     }
     Enums: {
