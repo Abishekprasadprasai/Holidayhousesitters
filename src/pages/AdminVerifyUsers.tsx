@@ -58,38 +58,31 @@ const AdminVerifyUsers = () => {
   const fetchPendingUsers = async () => {
     setIsLoading(true);
     try {
-      // Get pending users (not verified)
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("is_verified", false)
-        .order("created_at", { ascending: false });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
 
-      if (profilesError) throw profilesError;
-
-      // Get user emails from auth.users metadata and roles
-      const usersWithDetails = await Promise.all(
-        (profilesData || []).map(async (profile) => {
-          // Get role
-          const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", profile.user_id)
-            .single();
-
-          // Get email from auth
-          const { data: { user } } = await supabase.auth.admin.getUserById(profile.user_id);
-
-          return {
-            ...profile,
-            email: user?.email || "N/A",
-            role: roleData?.role || "N/A",
-          };
-        })
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-pending-users`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
 
-      setPendingUsers(usersWithDetails);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch pending users");
+      }
+
+      const { users } = await response.json();
+      setPendingUsers(users || []);
     } catch (error: any) {
+      console.error("Error fetching pending users:", error);
       toast({
         title: "Error",
         description: "Failed to load pending users. " + error.message,
