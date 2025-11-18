@@ -148,9 +148,14 @@ const MyListings = () => {
                 Manage your property listings and review applications
               </p>
             </div>
-            <Button onClick={() => navigate("/listings/new")}>
-              Create New Listing
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => navigate("/")}>
+                Go Back to Home
+              </Button>
+              <Button onClick={() => navigate("/listings/new")}>
+                Create New Listing
+              </Button>
+            </div>
           </div>
 
           {listings.length === 0 ? (
