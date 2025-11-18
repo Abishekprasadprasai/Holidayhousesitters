@@ -30,6 +30,7 @@ const Dashboard = () => {
     recentBookings: [] as any[],
   });
   const [detailedUsers, setDetailedUsers] = useState<any[]>([]);
+  const [pendingAdminRequests, setPendingAdminRequests] = useState<any[]>([]);
   const [selectedSection, setSelectedSection] = useState<'all' | 'verified' | 'paid'>('all');
   const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
@@ -134,6 +135,29 @@ const Dashboard = () => {
         );
         setDetailedUsers(usersWithDetails);
       }
+
+      // Fetch pending admin requests
+      const { data: adminRequests } = await supabase
+        .from("pending_admin_requests")
+        .select(`
+          *,
+          profile:profiles!pending_admin_requests_user_id_fkey(name, user_id)
+        `)
+        .eq("status", "pending")
+        .order("requested_at", { ascending: false });
+
+      if (adminRequests) {
+        const requestsWithEmails = await Promise.all(
+          adminRequests.map(async (request) => {
+            const { data: { user: authUser } } = await supabase.auth.admin.getUserById(request.user_id);
+            return {
+              ...request,
+              email: authUser?.email || "N/A",
+            };
+          })
+        );
+        setPendingAdminRequests(requestsWithEmails);
+      }
     };
 
     checkAuth();
@@ -163,6 +187,55 @@ const Dashboard = () => {
       description: "You have been successfully logged out.",
     });
     navigate("/");
+  };
+
+  const handleApproveAdmin = async (requestId: string) => {
+    try {
+      const { error } = await supabase.rpc("approve_admin_request", {
+        request_id: requestId,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Admin approved",
+        description: "User has been granted admin access.",
+      });
+
+      // Refresh pending requests
+      setPendingAdminRequests(prev => prev.filter(req => req.id !== requestId));
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRejectAdmin = async (requestId: string) => {
+    try {
+      const { error } = await supabase.rpc("reject_admin_request", {
+        request_id: requestId,
+        rejection_notes: "Admin request rejected by administrator",
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Request rejected",
+        description: "Admin request has been rejected.",
+      });
+
+      // Refresh pending requests
+      setPendingAdminRequests(prev => prev.filter(req => req.id !== requestId));
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading || roleLoading) {
@@ -203,6 +276,61 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Pending Admin Requests */}
+            {pendingAdminRequests.length > 0 && (
+              <Card className="border-orange-200 bg-orange-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-orange-600" />
+                    Pending Admin Requests ({pendingAdminRequests.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Requested At</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingAdminRequests.map((request) => (
+                        <TableRow key={request.id}>
+                          <TableCell className="font-medium">
+                            {request.profile?.name || "N/A"}
+                          </TableCell>
+                          <TableCell>{request.email}</TableCell>
+                          <TableCell>
+                            {new Date(request.requested_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleApproveAdmin(request.id)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleRejectAdmin(request.id)}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Stats Overview */}
             <div className="grid md:grid-cols-4 gap-6">

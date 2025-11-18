@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,14 +12,25 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload } from "lucide-react";
 
 const Register = () => {
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"homeowner" | "sitter">("sitter");
+  const [role, setRole] = useState<"homeowner" | "sitter" | "admin">("sitter");
   const [document, setDocument] = useState<File | null>(null);
+  const [isAdminSignup, setIsAdminSignup] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if admin signup URL parameter is present
+    const adminParam = searchParams.get("admin");
+    if (adminParam === "true") {
+      setIsAdminSignup(true);
+      setRole("admin");
+    }
+  }, [searchParams]);
 
   // Test mode flag - set to true to bypass Stripe payment
   const TEST_MODE = true;
@@ -72,6 +83,26 @@ const Register = () => {
         .eq('user_id', authData.user.id);
 
       if (updateError) throw updateError;
+
+      // Handle admin signup separately
+      if (isAdminSignup && role === "admin") {
+        // Submit admin request for manual approval
+        const { error: adminRequestError } = await supabase
+          .from('pending_admin_requests')
+          .insert({ user_id: authData.user.id });
+
+        if (adminRequestError) throw adminRequestError;
+
+        toast({
+          title: "Admin request submitted!",
+          description: "Your admin access request has been submitted for review. You'll be notified once approved.",
+        });
+
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+        return;
+      }
 
       if (TEST_MODE) {
         // Test mode: Mark user as paid and redirect to dashboard
@@ -171,19 +202,31 @@ const Register = () => {
 
               <div className="space-y-2">
                 <Label>I want to</Label>
-                <RadioGroup value={role} onValueChange={(value: any) => setRole(value)}>
+                <RadioGroup 
+                  value={role} 
+                  onValueChange={(value: any) => setRole(value)}
+                  disabled={isAdminSignup}
+                >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="sitter" id="sitter" />
+                    <RadioGroupItem value="sitter" id="sitter" disabled={isAdminSignup} />
                     <Label htmlFor="sitter" className="font-normal cursor-pointer">
                       Become a house/pet sitter
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="homeowner" id="homeowner" />
+                    <RadioGroupItem value="homeowner" id="homeowner" disabled={isAdminSignup} />
                     <Label htmlFor="homeowner" className="font-normal cursor-pointer">
                       Find a sitter for my home/pets
                     </Label>
                   </div>
+                  {isAdminSignup && (
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="admin" id="admin" checked />
+                      <Label htmlFor="admin" className="font-normal">
+                        Administrator (Requires Approval)
+                      </Label>
+                    </div>
+                  )}
                 </RadioGroup>
               </div>
 
