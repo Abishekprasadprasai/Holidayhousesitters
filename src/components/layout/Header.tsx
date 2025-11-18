@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 
 export const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { role } = useUserRole();
 
   const NavLinks = () => (
     <>
@@ -19,6 +21,12 @@ export const Header = () => {
       <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
         Contact
       </Link>
+      {role === "admin" && (
+        <Link to="/admin/verify-users" className="text-foreground hover:text-primary transition-colors flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4" />
+          <span>Verify Users</span>
+        </Link>
+      )}
     </>
   );
 
