@@ -30,6 +30,7 @@ const Dashboard = () => {
     recentBookings: [] as any[],
   });
   const [detailedUsers, setDetailedUsers] = useState<any[]>([]);
+  const [selectedSection, setSelectedSection] = useState<'all' | 'verified' | 'paid'>('all');
   const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -205,7 +206,10 @@ const Dashboard = () => {
 
             {/* Stats Overview */}
             <div className="grid md:grid-cols-4 gap-6">
-              <Card>
+              <Card 
+                className={`cursor-pointer transition-all hover:shadow-md ${selectedSection === 'all' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setSelectedSection('all')}
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Registered</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -218,7 +222,10 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card 
+                className={`cursor-pointer transition-all hover:shadow-md ${selectedSection === 'verified' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setSelectedSection('verified')}
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Verified Users</CardTitle>
                   <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -231,7 +238,10 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card 
+                className={`cursor-pointer transition-all hover:shadow-md ${selectedSection === 'paid' ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setSelectedSection('paid')}
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Paid Members</CardTitle>
                   <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -305,190 +315,194 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            {/* All Users Table */}
-            <Card className="mt-8">
-              <CardHeader>
-                <CardTitle>All Registered Users</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead>Listings</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {detailedUsers.length === 0 ? (
+            {/* User Tables - Conditional Rendering */}
+            {selectedSection === 'all' && (
+              <Card className="mt-8">
+                <CardHeader>
+                  <CardTitle>All Registered Users</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
-                          No users found
-                        </TableCell>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Payment</TableHead>
+                        <TableHead>Listings</TableHead>
                       </TableRow>
-                    ) : (
-                      detailedUsers.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.name}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{user.role}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {user.is_verified ? (
-                              <Badge className="bg-green-500">Verified</Badge>
-                            ) : (
-                              <Badge variant="secondary">Pending</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {user.is_paid ? (
-                              <Badge className="bg-blue-500">Paid</Badge>
-                            ) : (
-                              <Badge variant="outline">Unpaid</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {user.listings.length > 0 ? (
-                              <div className="space-y-1">
-                                {user.listings.map((listing: any, idx: number) => (
-                                  <div key={idx} className="text-sm">
-                                    {listing.title} <Badge variant="outline" className="ml-1">{listing.status}</Badge>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">No listings</span>
-                            )}
+                    </TableHeader>
+                    <TableBody>
+                      {detailedUsers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            No users found
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                      ) : (
+                        detailedUsers.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.name}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{user.role}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {user.is_verified ? (
+                                <Badge className="bg-green-500">Verified</Badge>
+                              ) : (
+                                <Badge variant="secondary">Pending</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {user.is_paid ? (
+                                <Badge className="bg-blue-500">Paid</Badge>
+                              ) : (
+                                <Badge variant="outline">Unpaid</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {user.listings.length > 0 ? (
+                                <div className="space-y-1">
+                                  {user.listings.map((listing: any, idx: number) => (
+                                    <div key={idx} className="text-sm">
+                                      {listing.title} <Badge variant="outline" className="ml-1">{listing.status}</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">No listings</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Verified Users Table */}
-            <Card className="mt-8">
-              <CardHeader>
-                <CardTitle>Verified Users</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead>Listings</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {detailedUsers.filter(u => u.is_verified).length === 0 ? (
+            {selectedSection === 'verified' && (
+              <Card className="mt-8">
+                <CardHeader>
+                  <CardTitle>Verified Users</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          No verified users
-                        </TableCell>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Payment</TableHead>
+                        <TableHead>Listings</TableHead>
                       </TableRow>
-                    ) : (
-                      detailedUsers.filter(u => u.is_verified).map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.name}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{user.role}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {user.is_paid ? (
-                              <Badge className="bg-blue-500">Paid</Badge>
-                            ) : (
-                              <Badge variant="outline">Unpaid</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {user.listings.length > 0 ? (
-                              <div className="space-y-1">
-                                {user.listings.map((listing: any, idx: number) => (
-                                  <div key={idx} className="text-sm">
-                                    {listing.title} <Badge variant="outline" className="ml-1">{listing.status}</Badge>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">No listings</span>
-                            )}
+                    </TableHeader>
+                    <TableBody>
+                      {detailedUsers.filter(u => u.is_verified).length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            No verified users
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                      ) : (
+                        detailedUsers.filter(u => u.is_verified).map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.name}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{user.role}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {user.is_paid ? (
+                                <Badge className="bg-blue-500">Paid</Badge>
+                              ) : (
+                                <Badge variant="outline">Unpaid</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {user.listings.length > 0 ? (
+                                <div className="space-y-1">
+                                  {user.listings.map((listing: any, idx: number) => (
+                                    <div key={idx} className="text-sm">
+                                      {listing.title} <Badge variant="outline" className="ml-1">{listing.status}</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">No listings</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Paid Members Table */}
-            <Card className="mt-8">
-              <CardHeader>
-                <CardTitle>Paid Members</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Listings</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {detailedUsers.filter(u => u.is_paid).length === 0 ? (
+            {selectedSection === 'paid' && (
+              <Card className="mt-8">
+                <CardHeader>
+                  <CardTitle>Paid Members</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          No paid members
-                        </TableCell>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Listings</TableHead>
                       </TableRow>
-                    ) : (
-                      detailedUsers.filter(u => u.is_paid).map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.name}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{user.role}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {user.is_verified ? (
-                              <Badge className="bg-green-500">Verified</Badge>
-                            ) : (
-                              <Badge variant="secondary">Pending</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {user.listings.length > 0 ? (
-                              <div className="space-y-1">
-                                {user.listings.map((listing: any, idx: number) => (
-                                  <div key={idx} className="text-sm">
-                                    {listing.title} <Badge variant="outline" className="ml-1">{listing.status}</Badge>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">No listings</span>
-                            )}
+                    </TableHeader>
+                    <TableBody>
+                      {detailedUsers.filter(u => u.is_paid).length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            No paid members
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                      ) : (
+                        detailedUsers.filter(u => u.is_paid).map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.name}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{user.role}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {user.is_verified ? (
+                                <Badge className="bg-green-500">Verified</Badge>
+                              ) : (
+                                <Badge variant="secondary">Pending</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {user.listings.length > 0 ? (
+                                <div className="space-y-1">
+                                  {user.listings.map((listing: any, idx: number) => (
+                                    <div key={idx} className="text-sm">
+                                      {listing.title} <Badge variant="outline" className="ml-1">{listing.status}</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">No listings</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Recent Bookings */}
             <Card className="mt-8">
