@@ -154,6 +154,21 @@ const Dashboard = () => {
               </Button>
             </div>
 
+            {/* Quick Actions */}
+            <div className="grid md:grid-cols-2 gap-4 mb-8">
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="text-lg font-semibold mb-2">User Verification</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {stats.pendingVerification} users pending verification
+                  </p>
+                  <Button onClick={() => navigate("/admin/verify-users")} className="w-full">
+                    Verify Users
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Stats Overview */}
             <div className="grid md:grid-cols-4 gap-6">
               <Card>
