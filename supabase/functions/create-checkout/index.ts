@@ -27,7 +27,7 @@ serve(async (req) => {
       throw new Error("User not authenticated or email not available");
     }
 
-    console.log("Creating checkout session for user:", user.email);
+    console.log("Creating checkout session for authenticated user");
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -39,7 +39,7 @@ serve(async (req) => {
     
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      console.log("Existing customer found:", customerId);
+      console.log("Existing customer found");
     }
 
     // Create checkout session for annual membership
@@ -60,7 +60,7 @@ serve(async (req) => {
       },
     });
 
-    console.log("Checkout session created:", session.id);
+    console.log("Checkout session created successfully");
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
