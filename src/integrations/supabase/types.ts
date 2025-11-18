@@ -161,6 +161,7 @@ export type Database = {
           name: string
           ndis_certified: boolean | null
           phone: string | null
+          phone_consent: boolean | null
           photo_url: string | null
           skills: string[] | null
           updated_at: string | null
@@ -181,6 +182,7 @@ export type Database = {
           name: string
           ndis_certified?: boolean | null
           phone?: string | null
+          phone_consent?: boolean | null
           photo_url?: string | null
           skills?: string[] | null
           updated_at?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           name?: string
           ndis_certified?: boolean | null
           phone?: string | null
+          phone_consent?: boolean | null
           photo_url?: string | null
           skills?: string[] | null
           updated_at?: string | null
@@ -263,6 +266,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_profile_with_privacy: {
+        Args: { profile_user_id: string }
+        Returns: {
+          bio: string
+          certificates: string[]
+          created_at: string
+          document_url: string
+          experience: string
+          id: string
+          is_paid: boolean
+          is_verified: boolean
+          loyalty_badge: Database["public"]["Enums"]["loyalty_badge"]
+          name: string
+          ndis_certified: boolean
+          phone: string
+          phone_consent: boolean
+          photo_url: string
+          skills: string[]
+          updated_at: string
+          user_id: string
+          verification_date: string
+          verified_by_admin_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
