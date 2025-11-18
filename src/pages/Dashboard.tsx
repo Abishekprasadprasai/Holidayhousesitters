@@ -107,6 +107,10 @@ const Dashboard = () => {
 
     checkAuth();
 
+    if (!roleLoading && role === "admin") {
+      fetchAdminStats();
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
         navigate("/login");
@@ -119,7 +123,7 @@ const Dashboard = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, role, roleLoading]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
