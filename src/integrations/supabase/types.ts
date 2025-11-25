@@ -57,6 +57,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "bookings_sitter_id_fkey"
+            columns: ["sitter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       listings: {
@@ -111,6 +118,13 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "listings_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["user_id"]
           },
         ]
@@ -353,7 +367,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          bio: string | null
+          certificates: string[] | null
+          created_at: string | null
+          experience: string | null
+          id: string | null
+          is_verified: boolean | null
+          loyalty_badge: Database["public"]["Enums"]["loyalty_badge"] | null
+          name: string | null
+          ndis_certified: boolean | null
+          phone: string | null
+          photo_url: string | null
+          skills: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          bio?: string | null
+          certificates?: string[] | null
+          created_at?: string | null
+          experience?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          loyalty_badge?: Database["public"]["Enums"]["loyalty_badge"] | null
+          name?: string | null
+          ndis_certified?: boolean | null
+          phone?: never
+          photo_url?: string | null
+          skills?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          bio?: string | null
+          certificates?: string[] | null
+          created_at?: string | null
+          experience?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          loyalty_badge?: Database["public"]["Enums"]["loyalty_badge"] | null
+          name?: string | null
+          ndis_certified?: boolean | null
+          phone?: never
+          photo_url?: string | null
+          skills?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approve_admin_request: {
@@ -367,11 +428,14 @@ export type Database = {
           certificates: string[]
           created_at: string
           document_url: string
+          emergency_contacts: string
           experience: string
           id: string
           is_paid: boolean
           is_verified: boolean
+          location: string
           loyalty_badge: Database["public"]["Enums"]["loyalty_badge"]
+          medication_needs: boolean
           name: string
           ndis_certified: boolean
           phone: string
@@ -382,6 +446,23 @@ export type Database = {
           user_id: string
           verification_date: string
           verified_by_admin_id: string
+        }[]
+      }
+      get_safe_profile: {
+        Args: { profile_user_id: string }
+        Returns: {
+          average_rating: number
+          bio: string
+          certificates: string[]
+          experience: string
+          id: string
+          is_verified: boolean
+          loyalty_badge: Database["public"]["Enums"]["loyalty_badge"]
+          name: string
+          ndis_certified: boolean
+          photo_url: string
+          skills: string[]
+          user_id: string
         }[]
       }
       get_user_roles_with_names: {
