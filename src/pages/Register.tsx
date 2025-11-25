@@ -25,9 +25,6 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Test mode flag - set to true to bypass Stripe payment
-  const TEST_MODE = true;
-
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -126,41 +123,15 @@ const Register = () => {
         return;
       }
 
-      if (TEST_MODE) {
-        // Test mode: Mark user as paid and redirect to dashboard
-        const { error: paymentUpdateError } = await supabase
-          .from('profiles')
-          .update({ is_paid: true })
-          .eq('user_id', authData.user.id);
+      // Registration successful - user needs to wait for verification before payment
+      toast({
+        title: "Registration successful!",
+        description: "Your account has been created. An admin will verify your documents, then you can complete payment to access all features.",
+      });
 
-        if (paymentUpdateError) throw paymentUpdateError;
-
-        toast({
-          title: "Registration successful!",
-          description: "Test mode: Payment skipped. Redirecting to dashboard...",
-        });
-
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1500);
-      } else {
-        // Production mode: Create Stripe checkout session
-        toast({
-          title: "Registration successful!",
-          description: "Redirecting to payment...",
-        });
-
-        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
-          "create-checkout"
-        );
-
-        if (checkoutError) throw checkoutError;
-
-        // Redirect to Stripe checkout
-        if (checkoutData?.url) {
-          window.location.href = checkoutData.url;
-        }
-      }
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 2000);
     } catch (error: any) {
       toast({
         title: "Registration failed",

@@ -718,11 +718,49 @@ const Dashboard = () => {
               </div>
               {!profile?.is_verified && (
                 <p className="text-sm text-muted-foreground">
-                  Our team will contact you soon to verify your account.
+                  Our team will verify your documents before you can proceed with payment.
                 </p>
               )}
             </CardContent>
           </Card>
+
+          {/* Payment Prompt - Only show if verified but not paid */}
+          {profile?.is_verified && !profile?.is_paid && (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardHeader>
+                <CardTitle className="text-orange-900">Complete Your Membership</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-orange-800">
+                  Great news! Your account has been verified. Complete your annual membership payment to access all features and start connecting with homeowners and sitters.
+                </p>
+                <Button 
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+                        "create-checkout"
+                      );
+
+                      if (checkoutError) throw checkoutError;
+
+                      if (checkoutData?.url) {
+                        window.open(checkoutData.url, '_blank');
+                      }
+                    } catch (error: any) {
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to create payment session",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Complete Payment
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Quick Actions */}
           <div className="grid md:grid-cols-2 gap-6">
