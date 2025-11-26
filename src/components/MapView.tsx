@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
+import { Loader2 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
 // Fix for default markers
@@ -73,13 +74,23 @@ function MapUpdater({ profiles }: { profiles: Profile[] }) {
 
 export function MapView({ profiles, selectedProfileId, onProfileClick }: MapViewProps) {
   const [highlightedId, setHighlightedId] = useState<string | undefined>(selectedProfileId);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     setHighlightedId(selectedProfileId);
   }, [selectedProfileId]);
 
   // Default center (Sydney, Australia)
   const defaultCenter: [number, number] = [-33.8688, 151.2093];
+
+  if (!isClient) {
+    return (
+      <div className="h-full w-full rounded-lg overflow-hidden border border-border flex items-center justify-center bg-muted">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden border border-border">
