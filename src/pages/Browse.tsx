@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Search, Filter } from "lucide-react";
-import { MapView } from "@/components/MapView";
 import { ProfileCard } from "@/components/ProfileCard";
 import { geocodeLocations, calculateDistance } from "@/utils/geocoding";
 import {
@@ -17,6 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const MapView = lazy(() => import("@/components/MapView").then(module => ({ default: module.MapView })));
 
 type Profile = {
   id: string;
@@ -257,11 +257,19 @@ const Browse = () => {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Map */}
             <div className="lg:col-span-2 h-[500px] lg:h-[600px]">
-              <MapView
-                profiles={filteredProfiles}
-                selectedProfileId={selectedProfileId}
-                onProfileClick={handleProfileClick}
-              />
+              <Suspense
+                fallback={
+                  <div className="h-full w-full rounded-lg border border-border flex items-center justify-center bg-muted">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                }
+              >
+                <MapView
+                  profiles={filteredProfiles}
+                  selectedProfileId={selectedProfileId}
+                  onProfileClick={handleProfileClick}
+                />
+              </Suspense>
             </div>
 
             {/* Profile List */}
