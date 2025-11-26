@@ -1,150 +1,211 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, MapPin, Calendar, Heart } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Loader2, Search, Filter } from "lucide-react";
+import { MapView } from "@/components/MapView";
+import { ProfileCard } from "@/components/ProfileCard";
+import { geocodeLocations, calculateDistance } from "@/utils/geocoding";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type Profile = {
+  id: string;
+  user_id: string;
+  name: string;
+  bio?: string;
+  location?: string;
+  photo_url?: string;
+  skills?: string[];
+  is_verified: boolean;
+  role: "sitter" | "homeowner";
+  lat?: number;
+  lng?: number;
+};
 
 const Browse = () => {
-  const { role, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const [listings, setListings] = useState<any[]>([]);
-  const [sitters, setSitters] = useState<any[]>([]);
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
+  const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [applyingTo, setApplyingTo] = useState<string | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<"all" | "sitter" | "homeowner">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProfileId, setSelectedProfileId] = useState<string>();
 
-  const handleApplyToListing = async (listingId: string) => {
-    setApplyingTo(listingId);
+  useEffect(() => {
+    loadProfiles();
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [allProfiles, roleFilter, searchQuery]);
+
+  const loadProfiles = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/login");
+      setLoading(true);
+
+      // Fetch all verified and paid profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("is_verified", true)
+        .eq("is_paid", true);
+
+      if (profilesError) throw profilesError;
+
+      if (!profiles || profiles.length === 0) {
+        setAllProfiles([]);
+        setLoading(false);
         return;
       }
 
-      const { error } = await supabase.from("bookings").insert({
-        listing_id: listingId,
-        sitter_id: user.id,
-        status: "pending",
+      // Fetch roles for all users
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in(
+          "user_id",
+          profiles.map((p) => p.user_id)
+        );
+
+      if (rolesError) throw rolesError;
+
+      // Map roles to profiles
+      const roleMap = new Map(roles?.map((r) => [r.user_id, r.role]) || []);
+
+      // Filter profiles that have a role and location
+      const profilesWithRole = profiles
+        .filter((p) => p.location && roleMap.has(p.user_id))
+        .map((p) => ({
+          ...p,
+          role: roleMap.get(p.user_id) as "sitter" | "homeowner",
+        }));
+
+      // Geocode all locations
+      setGeocoding(true);
+      const locations = profilesWithRole
+        .map((p) => p.location)
+        .filter(Boolean) as string[];
+      const coordsMap = await geocodeLocations(locations);
+      setGeocoding(false);
+
+      // Add coordinates to profiles
+      const profilesWithCoords = profilesWithRole.map((p) => {
+        const coords = p.location ? coordsMap.get(p.location) : null;
+        return {
+          ...p,
+          lat: coords?.lat,
+          lng: coords?.lng,
+        };
       });
 
-      if (error) throw error;
-
-      toast({
-        title: "Application Sent!",
-        description: "Your application has been sent to the homeowner.",
-      });
+      setAllProfiles(profilesWithCoords);
     } catch (error: any) {
-      console.error("Error applying to listing:", error);
+      console.error("Error loading profiles:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to load profiles. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setApplyingTo(null);
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    const loadUserAndData = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          navigate("/login");
-          return;
-        }
+  const applyFilters = () => {
+    let filtered = [...allProfiles];
 
-        // Get user profile
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-
-        setUserProfile(profile);
-
-        // Check if user is paid
-        if (!profile?.is_paid) {
-          toast({
-            title: "Membership Required",
-            description: "Please complete your payment to access this feature.",
-            variant: "destructive",
-          });
-          navigate("/register");
-          return;
-        }
-
-        if (role === "homeowner") {
-          // Load verified sitters
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("is_verified", true)
-            .eq("is_paid", true);
-
-          if (error) throw error;
-
-          // Filter sitters by checking user_roles
-          const sittersData = [];
-          for (const profile of data || []) {
-            const { data: roles } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", profile.user_id)
-              .eq("role", "sitter")
-              .single();
-
-            if (roles) {
-              sittersData.push(profile);
-            }
-          }
-
-          setSitters(sittersData);
-        } else if (role === "sitter") {
-          // Load active listings
-          const { data, error } = await supabase
-            .from("listings")
-            .select(`
-              *,
-              profiles:owner_id (name, photo_url)
-            `)
-            .eq("status", "active")
-            .order("created_at", { ascending: false });
-
-          if (error) throw error;
-          setListings(data || []);
-        }
-      } catch (error: any) {
-        console.error("Error loading data:", error);
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (!roleLoading) {
-      loadUserAndData();
+    // Apply role filter
+    if (roleFilter !== "all") {
+      filtered = filtered.filter((p) => p.role === roleFilter);
     }
-  }, [role, roleLoading, navigate, toast]);
 
-  if (roleLoading || loading) {
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.location?.toLowerCase().includes(query) ||
+          p.bio?.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredProfiles(filtered);
+  };
+
+  const handleProfileClick = (profileId: string) => {
+    setSelectedProfileId(profileId);
+    // Scroll to profile in list
+    const element = document.getElementById(`profile-${profileId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  };
+
+  const getRecommendedProfiles = () => {
+    if (!selectedProfileId || filteredProfiles.length === 0) return [];
+
+    const selectedProfile = filteredProfiles.find((p) => p.id === selectedProfileId);
+    if (!selectedProfile?.lat || !selectedProfile?.lng) return [];
+
+    // Calculate distances and sort
+    const withDistances = filteredProfiles
+      .filter((p) => p.id !== selectedProfileId && p.lat && p.lng)
+      .map((p) => ({
+        ...p,
+        distance: calculateDistance(
+          selectedProfile.lat!,
+          selectedProfile.lng!,
+          p.lat!,
+          p.lng!
+        ),
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 3);
+
+    return withDistances;
+  };
+
+  const recommendedProfiles = getRecommendedProfiles();
+
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading profiles...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (geocoding) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Preparing map locations...</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              This may take a moment
+            </p>
+          </div>
         </main>
         <Footer />
       </div>
@@ -154,139 +215,106 @@ const Browse = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
-      <main className="flex-1 py-12 bg-muted/50">
+
+      <main className="flex-1 py-8 bg-muted/50">
         <div className="container">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">
-              {role === "homeowner" ? "Find House Sitters" : "Browse Opportunities"}
-            </h1>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">Find Sitters & Homeowners</h1>
             <p className="text-muted-foreground">
-              {role === "homeowner" 
-                ? "Connect with verified and trusted house sitters"
-                : "Discover house sitting opportunities across Australia"}
+              Discover trusted sitters and homeowners in your area
             </p>
           </div>
 
-          {role === "homeowner" && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sitters.length === 0 ? (
-                <Card className="col-span-full">
-                  <CardContent className="pt-6 text-center">
-                    <p className="text-muted-foreground">No verified sitters available yet.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                sitters.map((sitter) => (
-                  <Card key={sitter.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-center gap-4">
-                        {sitter.photo_url ? (
-                          <img 
-                            src={sitter.photo_url} 
-                            alt={sitter.name}
-                            className="w-16 h-16 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-2xl">{sitter.name[0]}</span>
-                          </div>
-                        )}
-                        <div>
-                          <CardTitle className="text-xl">{sitter.name}</CardTitle>
-                          {sitter.ndis_certified && (
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                              NDIS Certified
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {sitter.bio && (
-                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                          {sitter.bio}
-                        </p>
-                      )}
-                      {sitter.experience && (
-                        <p className="text-sm mb-2">
-                          <strong>Experience:</strong> {sitter.experience}
-                        </p>
-                      )}
-                      {sitter.skills && sitter.skills.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-4">
-                          {sitter.skills.map((skill: string, idx: number) => (
-                            <span key={idx} className="text-xs bg-muted px-2 py-1 rounded">
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <Button className="w-full">Contact Sitter</Button>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, location, or suburb..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
-          )}
+            <div className="w-full sm:w-48">
+              <Select value={roleFilter} onValueChange={(value: any) => setRoleFilter(value)}>
+                <SelectTrigger>
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Profiles</SelectItem>
+                  <SelectItem value="sitter">Sitters Only</SelectItem>
+                  <SelectItem value="homeowner">Homeowners Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-          {role === "sitter" && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {listings.length === 0 ? (
-                <Card className="col-span-full">
-                  <CardContent className="pt-6 text-center">
-                    <p className="text-muted-foreground">No active listings available yet.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                listings.map((listing) => (
-                  <Card key={listing.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <CardTitle className="text-xl">{listing.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3 mb-4">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          {listing.location}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(listing.start_date).toLocaleDateString()} - {new Date(listing.end_date).toLocaleDateString()}
-                        </div>
-                        {listing.pets && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Heart className="h-4 w-4" />
-                            {listing.pets.length} pet(s) to care for
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                        {listing.description}
+          {/* Map and List Layout */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Map */}
+            <div className="lg:col-span-2 h-[500px] lg:h-[600px]">
+              <MapView
+                profiles={filteredProfiles}
+                selectedProfileId={selectedProfileId}
+                onProfileClick={handleProfileClick}
+              />
+            </div>
+
+            {/* Profile List */}
+            <div className="lg:col-span-1">
+              <Card className="h-[500px] lg:h-[600px] flex flex-col">
+                <CardContent className="pt-6 flex-1 overflow-y-auto">
+                  <h2 className="font-semibold mb-4 sticky top-0 bg-card pb-2">
+                    {filteredProfiles.length} Profile{filteredProfiles.length !== 1 ? "s" : ""} Found
+                  </h2>
+                  {filteredProfiles.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground text-sm">
+                        No profiles found. Try adjusting your filters.
                       </p>
-                      <Button 
-                        className="w-full" 
-                        onClick={() => handleApplyToListing(listing.id)}
-                        disabled={applyingTo === listing.id}
-                      >
-                        {applyingTo === listing.id ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Applying...
-                          </>
-                        ) : (
-                          "Apply Now"
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredProfiles.map((profile) => (
+                        <div key={profile.id} id={`profile-${profile.id}`}>
+                          <ProfileCard
+                            {...profile}
+                            isHighlighted={selectedProfileId === profile.id}
+                            onClick={() => handleProfileClick(profile.id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Recommended Nearby */}
+          {recommendedProfiles.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">
+                Recommended Near This Area
+              </h2>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recommendedProfiles.map((profile) => (
+                  <ProfileCard
+                    key={profile.id}
+                    {...profile}
+                    onClick={() => handleProfileClick(profile.id)}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
