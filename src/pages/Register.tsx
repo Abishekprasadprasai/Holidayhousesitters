@@ -22,6 +22,7 @@ const Register = () => {
   const [role, setRole] = useState<"homeowner" | "sitter" | "vet_nurse" | "admin">("sitter");
   const [adminCode, setAdminCode] = useState("");
   const [document, setDocument] = useState<File | null>(null);
+  const [vetExperience, setVetExperience] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -40,10 +41,32 @@ const Register = () => {
       }
     }
     
-    if (!document) {
+    // Validate vet nurse experience
+    if (role === "vet_nurse") {
+      if (!vetExperience) {
+        toast({
+          title: "Experience required",
+          description: "Please select your years of veterinary experience",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    // Check if document is required based on role and experience
+    const documentRequired = 
+      role === "sitter" || 
+      role === "homeowner" || 
+      role === "admin" || 
+      (role === "vet_nurse" && vetExperience === "less-than-1");
+    
+    if (documentRequired && !document) {
+      const message = role === "vet_nurse" 
+        ? "Vet nurses with less than 1 year experience require a police check"
+        : "Please upload your Australian driver's license or passport";
       toast({
         title: "Document required",
-        description: "Please upload your Australian driver's license or passport",
+        description: message,
         variant: "destructive",
       });
       return;
@@ -109,23 +132,36 @@ const Register = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Registration failed");
 
-      // Upload identity document
-      const fileExt = document.name.split('.').pop();
-      const filePath = `${authData.user.id}/identity.${fileExt}`;
+      // Upload identity document if provided
+      let filePath = null;
+      if (document) {
+        const fileExt = document.name.split('.').pop();
+        filePath = `${authData.user.id}/identity.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('identity-documents')
+          .upload(filePath, document);
+
+        if (uploadError) throw uploadError;
+      }
+
+      // Update profile with document URL and vet experience if applicable
+      const updateData: any = {};
+      if (filePath) {
+        updateData.document_url = filePath;
+      }
+      if (role === "vet_nurse") {
+        updateData.years_experience = vetExperience;
+      }
       
-      const { error: uploadError } = await supabase.storage
-        .from('identity-documents')
-        .upload(filePath, document);
+      if (Object.keys(updateData).length > 0) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update(updateData)
+          .eq('user_id', authData.user.id);
 
-      if (uploadError) throw uploadError;
-
-      // Update profile with document URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ document_url: filePath })
-        .eq('user_id', authData.user.id);
-
-      if (updateError) throw updateError;
+        if (updateError) throw updateError;
+      }
 
       // Handle admin signup separately
       if (role === "admin") {
@@ -268,8 +304,47 @@ const Register = () => {
                 </div>
               )}
 
+              {role === "vet_nurse" && (
+                <div className="space-y-2">
+                  <Label htmlFor="vetExperience">Years of Veterinary Experience *</Label>
+                  <RadioGroup 
+                    value={vetExperience} 
+                    onValueChange={setVetExperience}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="less-than-1" id="exp-less-1" />
+                      <Label htmlFor="exp-less-1" className="font-normal cursor-pointer">
+                        Less than 1 year (Police check required)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="1-3" id="exp-1-3" />
+                      <Label htmlFor="exp-1-3" className="font-normal cursor-pointer">
+                        1-3 years
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="3-5" id="exp-3-5" />
+                      <Label htmlFor="exp-3-5" className="font-normal cursor-pointer">
+                        3-5 years
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="5-plus" id="exp-5-plus" />
+                      <Label htmlFor="exp-5-plus" className="font-normal cursor-pointer">
+                        5+ years
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label htmlFor="document">Identity Document *</Label>
+                <Label htmlFor="document">
+                  {role === "vet_nurse" && vetExperience !== "less-than-1" 
+                    ? "Identity Document (Optional)" 
+                    : "Identity Document *"}
+                </Label>
                 <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
                   <Input
                     id="document"
@@ -277,15 +352,21 @@ const Register = () => {
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => setDocument(e.target.files?.[0] || null)}
                     className="hidden"
-                    required
+                    required={role === "sitter" || role === "homeowner" || role === "admin" || (role === "vet_nurse" && vetExperience === "less-than-1")}
                   />
                   <label htmlFor="document" className="cursor-pointer">
                     <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm font-medium">
-                      {document ? document.name : "Upload Australian Driver's License or Passport"}
+                      {document ? document.name : role === "vet_nurse" && vetExperience !== "less-than-1" 
+                        ? "Upload Police Check (Optional)" 
+                        : role === "vet_nurse" && vetExperience === "less-than-1"
+                        ? "Upload Police Check (Required)"
+                        : "Upload Australian Driver's License or Passport"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      PDF, JPG, or PNG (max 5MB)
+                      {role === "vet_nurse" 
+                        ? "Police check - PDF, JPG, or PNG (max 5MB)" 
+                        : "PDF, JPG, or PNG (max 5MB)"}
                     </p>
                   </label>
                 </div>
