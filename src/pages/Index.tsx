@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Shield, Heart, Users, CheckCircle2 } from "lucide-react";
 import { ClientPhotosCarousel } from "@/components/ClientPhotosCarousel";
-import { LocationMap } from "@/components/LocationMap";
+import LocationMap from "@/components/LocationMap";
 
 type Listing = {
   id: string;
