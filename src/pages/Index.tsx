@@ -5,6 +5,60 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Shield, Heart, Users, CheckCircle2 } from "lucide-react";
 import { ClientPhotosCarousel } from "@/components/ClientPhotosCarousel";
+import { LocationMap } from "@/components/LocationMap";
+
+type Listing = {
+  id: string;
+  title: string;
+  type: 'house_sit' | 'sitter';
+  suburb: string;
+  latitude: number;
+  longitude: number;
+};
+
+// Mock data for demonstration
+const mockListings: Listing[] = [
+  {
+    id: '1',
+    title: '2-Week House Sit in Carlton',
+    type: 'house_sit',
+    suburb: 'Carlton, VIC',
+    latitude: -37.800,
+    longitude: 144.966,
+  },
+  {
+    id: '2',
+    title: 'Pet-Loving Sitter in Brunswick',
+    type: 'sitter',
+    suburb: 'Brunswick, VIC',
+    latitude: -37.770,
+    longitude: 144.961,
+  },
+  {
+    id: '3',
+    title: 'House Sit Available in St Kilda',
+    type: 'house_sit',
+    suburb: 'St Kilda, VIC',
+    latitude: -37.867,
+    longitude: 144.981,
+  },
+  {
+    id: '4',
+    title: 'Experienced Sitter in Fitzroy',
+    type: 'sitter',
+    suburb: 'Fitzroy, VIC',
+    latitude: -37.800,
+    longitude: 144.978,
+  },
+  {
+    id: '5',
+    title: '3-Week Sit in Richmond',
+    type: 'house_sit',
+    suburb: 'Richmond, VIC',
+    latitude: -37.823,
+    longitude: 144.998,
+  },
+];
 
 const Index = () => {
   return (
@@ -82,6 +136,24 @@ const Index = () => {
                   </p>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Map Section */}
+        <section className="py-20 bg-background">
+          <div className="container">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl lg:text-4xl font-bold mb-4">Find House Sits and Sitters on the Map</h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Explore current sits and trusted sitters in your area
+              </p>
+            </div>
+            <LocationMap listings={mockListings} />
+            <div className="mt-8 text-center">
+              <Link to="/browse">
+                <Button size="lg">Browse All Listings</Button>
+              </Link>
             </div>
           </div>
         </section>
