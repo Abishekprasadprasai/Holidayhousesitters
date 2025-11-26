@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import { Loader2 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
@@ -54,35 +53,77 @@ type MapViewProps = {
   onProfileClick: (profileId: string) => void;
 };
 
-function MapUpdater({ profiles }: { profiles: Profile[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (profiles.length > 0) {
-      const validProfiles = profiles.filter(p => p.lat && p.lng);
-      if (validProfiles.length > 0) {
-        const bounds = L.latLngBounds(
-          validProfiles.map(p => [p.lat!, p.lng!])
-        );
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
-      }
-    }
-  }, [profiles, map]);
-
-  return null;
-}
-
 export function MapView({ profiles, selectedProfileId, onProfileClick }: MapViewProps) {
-  const [highlightedId, setHighlightedId] = useState<string | undefined>(selectedProfileId);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    setHighlightedId(selectedProfileId);
-  }, [selectedProfileId]);
+  }, []);
 
   // Default center (Sydney, Australia)
   const defaultCenter: [number, number] = [-33.8688, 151.2093];
+
+  // Initialize the map once on the client
+  useEffect(() => {
+    if (!isClient || !containerRef.current || mapRef.current) return;
+
+    const map = L.map(containerRef.current).setView(defaultCenter, 10);
+    mapRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    markersLayerRef.current = L.layerGroup().addTo(map);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markersLayerRef.current = null;
+    };
+  }, [isClient]);
+
+  // Update markers when profiles or selection change
+  useEffect(() => {
+    if (!mapRef.current || !markersLayerRef.current) return;
+
+    const layer = markersLayerRef.current;
+    layer.clearLayers();
+
+    const validProfiles = profiles.filter((p) => p.lat && p.lng);
+
+    validProfiles.forEach((profile) => {
+      const marker = L.marker([profile.lat!, profile.lng!], {
+        icon: profile.role === "sitter" ? sitterIcon : homeownerIcon,
+        opacity: selectedProfileId && selectedProfileId !== profile.id ? 0.7 : 1,
+      }).addTo(layer);
+
+      marker.on("click", () => onProfileClick(profile.id));
+
+      const popupContent = `
+        <div class="text-sm">
+          <h3 class="font-semibold mb-1">${profile.name}</h3>
+          <p class="text-xs capitalize mb-1">${profile.role}</p>
+          ${profile.location ? `<p class="text-xs text-muted-foreground">${profile.location}</p>` : ""}
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+    });
+
+    // Fit bounds to markers
+    if (validProfiles.length > 0) {
+      const bounds = L.latLngBounds(validProfiles.map((p) => [p.lat!, p.lng!]));
+      mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+    } else {
+      mapRef.current.setView(defaultCenter, 10);
+    }
+  }, [profiles, selectedProfileId, onProfileClick]);
 
   if (!isClient) {
     return (
@@ -94,48 +135,7 @@ export function MapView({ profiles, selectedProfileId, onProfileClick }: MapView
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden border border-border">
-      <MapContainer
-        center={defaultCenter}
-        zoom={10}
-        className="h-full w-full"
-        scrollWheelZoom={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        <MapUpdater profiles={profiles} />
-
-        {profiles
-          .filter(profile => profile.lat && profile.lng)
-          .map((profile) => (
-            <Marker
-              key={profile.id}
-              position={[profile.lat!, profile.lng!]}
-              icon={profile.role === "sitter" ? sitterIcon : homeownerIcon}
-              eventHandlers={{
-                click: () => onProfileClick(profile.id),
-              }}
-              opacity={highlightedId === profile.id ? 1 : 0.7}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <h3 className="font-semibold mb-1">{profile.name}</h3>
-                  <p className="text-xs text-muted-foreground capitalize mb-1">
-                    {profile.role}
-                  </p>
-                  {profile.location && (
-                    <p className="text-xs text-muted-foreground">{profile.location}</p>
-                  )}
-                  {profile.bio && (
-                    <p className="text-xs mt-2 line-clamp-2">{profile.bio}</p>
-                  )}
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-      </MapContainer>
+      <div ref={containerRef} className="h-full w-full" />
     </div>
   );
 }
