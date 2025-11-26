@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, X, Send } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -28,11 +29,24 @@ export const Chatbot = () => {
     setIsLoading(true);
 
     try {
+      // Get the current user's session token for authenticated requests
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to use the chat feature",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ messages: newMessages }),
       });
@@ -112,6 +126,18 @@ export const Chatbot = () => {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+    
+    // Limit message length to prevent abuse
+    const MAX_MESSAGE_LENGTH = 2000;
+    if (input.length > MAX_MESSAGE_LENGTH) {
+      toast({
+        title: "Message too long",
+        description: `Please limit your message to ${MAX_MESSAGE_LENGTH} characters`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const userMessage = input;
     setInput("");
     await streamChat(userMessage);

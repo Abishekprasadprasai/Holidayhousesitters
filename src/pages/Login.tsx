@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +22,23 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Input validation
+    const loginSchema = z.object({
+      email: z.string().trim().email("Invalid email address").max(255, "Email too long"),
+      password: z.string().min(1, "Password is required").max(100, "Password too long"),
+    });
+
+    const validation = loginSchema.safeParse({ email, password });
+    if (!validation.success) {
+      toast({
+        title: "Validation error",
+        description: validation.error.issues[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -50,6 +68,20 @@ const Login = () => {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate reset email
+    const emailSchema = z.string().trim().email("Invalid email address").max(255, "Email too long");
+    const validation = emailSchema.safeParse(resetEmail);
+    
+    if (!validation.success) {
+      toast({
+        title: "Validation error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {

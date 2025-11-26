@@ -49,11 +49,35 @@ const Register = () => {
       return;
     }
 
+    // File validation - check size and type
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    
+    if (document.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File too large",
+        description: "File size must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!ALLOWED_TYPES.includes(document.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JPG, PNG, or PDF file",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Input validation using zod
     const registrationSchema = z.object({
       name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
       email: z.string().trim().email("Invalid email address").max(255, "Email too long"),
-      password: z.string().min(6, "Password must be at least 6 characters").max(100, "Password too long"),
+      password: z.string().min(8, "Password must be at least 8 characters").max(100, "Password too long")
+        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .regex(/[0-9]/, "Password must contain at least one number"),
     });
 
     const validation = registrationSchema.safeParse({ name, email, password });
