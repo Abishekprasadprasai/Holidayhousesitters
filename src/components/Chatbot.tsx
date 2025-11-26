@@ -141,7 +141,7 @@ export const Chatbot = () => {
           <ScrollArea className="flex-1 p-4" ref={scrollRef}>
             {messages.length === 0 && (
               <p className="text-muted-foreground text-sm">
-                Hi! I'm here to help you with any questions about our car rental service.
+                Hi! I'm here to help you with Holiday House Sitters. Ask me about finding house sitters, becoming a sitter, verification, membership, or how our platform works!
               </p>
             )}
             {messages.map((msg, idx) => (
