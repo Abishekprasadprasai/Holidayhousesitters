@@ -15,6 +15,7 @@ import HowItWorks from "./pages/HowItWorks";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Browse from "./pages/Browse";
 import Listings from "./pages/Listings";
+import ListingDetails from "./pages/ListingDetails";
 import NotFound from "./pages/NotFound";
 import ProfileEdit from "./pages/ProfileEdit";
 import AdminVerifyUsers from "./pages/AdminVerifyUsers";
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/browse" element={<Browse />} />
           <Route path="/listings" element={<Listings />} />
+          <Route path="/listings/:id" element={<ListingDetails />} />
           <Route path="/profile/edit" element={<ProfileEdit />} />
           <Route path="/admin/verify-users" element={<AdminVerifyUsers />} />
           <Route path="/listings/new" element={<CreateListing />} />

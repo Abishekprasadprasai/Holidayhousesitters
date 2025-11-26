@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +24,7 @@ type Listing = {
 };
 
 const Listings = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,7 +179,9 @@ const Listings = () => {
                       <span className="text-sm text-muted-foreground">
                         Posted by {listing.owner_name || "Homeowner"}
                       </span>
-                      <Button size="sm">View Details</Button>
+                      <Button size="sm" onClick={() => navigate(`/listings/${listing.id}`)}>
+                        View Details
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
