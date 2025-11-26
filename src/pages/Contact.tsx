@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 
 const Contact = () => {
@@ -55,13 +56,13 @@ const Contact = () => {
                   Business Hours
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="font-semibold mb-1">Monday - Friday</p>
-                <p className="text-muted-foreground mb-3">9:00 AM - 5:00 PM AEST</p>
-                <p className="font-semibold mb-1">Saturday</p>
-                <p className="text-muted-foreground mb-3">10:00 AM - 2:00 PM AEST</p>
-                <p className="font-semibold mb-1">Sunday</p>
-                <p className="text-muted-foreground">Closed</p>
+              <CardContent className="space-y-3">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-24" />
               </CardContent>
             </Card>
 
