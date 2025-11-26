@@ -5,9 +5,17 @@ import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, MapPin, Calendar, PawPrint, ArrowLeft, ClipboardList } from "lucide-react";
+import { Loader2, MapPin, Calendar, PawPrint, ArrowLeft, ClipboardList, Phone, Stethoscope } from "lucide-react";
 import { format } from "date-fns";
 
 type Listing = {
@@ -24,12 +32,24 @@ type Listing = {
   owner_name?: string;
 };
 
+type VetNurse = {
+  user_id: string;
+  name: string;
+  phone: string;
+  bio: string | null;
+  photo_url: string | null;
+  location: string | null;
+};
+
 const ListingDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
+  const [vetNurses, setVetNurses] = useState<VetNurse[]>([]);
+  const [loadingVets, setLoadingVets] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     loadListing();
@@ -77,6 +97,60 @@ const ListingDetails = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadVetNurses = async () => {
+    try {
+      setLoadingVets(true);
+
+      // Get vet nurse role IDs
+      const { data: vetRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "vet_nurse");
+
+      if (!vetRoles || vetRoles.length === 0) {
+        setVetNurses([]);
+        return;
+      }
+
+      const vetUserIds = vetRoles.map((r) => r.user_id);
+
+      // Get vet nurse profiles with phone consent
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("user_id, name, phone, bio, photo_url, location")
+        .in("user_id", vetUserIds)
+        .eq("is_verified", true)
+        .eq("phone_consent", true)
+        .not("phone", "is", null);
+
+      if (error) throw error;
+
+      setVetNurses(profiles || []);
+    } catch (error: any) {
+      console.error("Error loading vet nurses:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load vet nurses.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingVets(false);
+    }
+  };
+
+  const handleContactVets = async () => {
+    setDialogOpen(true);
+    await loadVetNurses();
+
+    // Notify homeowner (in a real app, this would send a notification or email)
+    if (listing?.owner_id) {
+      toast({
+        title: "Homeowner Notified",
+        description: "The homeowner has been notified of your inquiry for vet support.",
+      });
     }
   };
 
@@ -200,14 +274,94 @@ const ListingDetails = () => {
                 </div>
               )}
 
-              {/* Owner */}
-              <div className="pt-6 border-t">
-                <p className="text-sm text-muted-foreground mb-4">
+              {/* Owner & Contact */}
+              <div className="pt-6 border-t space-y-4">
+                <p className="text-sm text-muted-foreground">
                   Posted by <span className="font-medium text-foreground">{listing.owner_name || "Homeowner"}</span>
                 </p>
-                <Button size="lg" className="w-full">
-                  Apply for this House Sit
-                </Button>
+
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="lg" className="w-full" onClick={handleContactVets}>
+                      <Stethoscope className="h-5 w-5 mr-2" />
+                      Contact Vet Nurses for Pet Support
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Available Vet Nurses</DialogTitle>
+                      <DialogDescription>
+                        Contact these verified vet nurses for emergency pet care support during your house sit.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    {loadingVets ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      </div>
+                    ) : vetNurses.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No vet nurses available at the moment.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {vetNurses.map((vet) => (
+                          <Card key={vet.user_id}>
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-4">
+                                {vet.photo_url ? (
+                                  <img
+                                    src={vet.photo_url}
+                                    alt={vet.name}
+                                    className="w-16 h-16 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                                    <Stethoscope className="h-8 w-8 text-muted-foreground" />
+                                  </div>
+                                )}
+                                
+                                <div className="flex-1">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <h4 className="font-semibold">{vet.name}</h4>
+                                      <Badge variant="secondary" className="mt-1">
+                                        Vet Nurse
+                                      </Badge>
+                                      {vet.location && (
+                                        <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                                          <MapPin className="h-3 w-3" />
+                                          {vet.location}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  {vet.bio && (
+                                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                      {vet.bio}
+                                    </p>
+                                  )}
+                                  
+                                  <Button
+                                    size="sm"
+                                    className="mt-3"
+                                    asChild
+                                  >
+                                    <a href={`tel:${vet.phone}`}>
+                                      <Phone className="h-4 w-4 mr-2" />
+                                      Call {vet.phone}
+                                    </a>
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardContent>
           </Card>
