@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { z } from "zod";
 
 const ProfileEdit = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -128,6 +129,43 @@ const ProfileEdit = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Input validation
+    const profileSchema = z.object({
+      name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
+      location: z.string().max(200, "Location too long").optional(),
+      phone: z.string().max(20, "Phone number too long").optional(),
+      bio: z.string().max(2000, "Bio too long").optional(),
+      photoUrl: z.string().url("Invalid URL").max(500, "URL too long").optional().or(z.literal("")),
+      experience: z.string().max(2000, "Experience description too long").optional(),
+      petCareInstructions: z.string().max(2000, "Instructions too long").optional(),
+      exerciseRequirements: z.string().max(1000, "Requirements too long").optional(),
+      houseRules: z.string().max(2000, "House rules too long").optional(),
+      emergencyContacts: z.string().max(1000, "Emergency contacts too long").optional(),
+    });
+
+    const validation = profileSchema.safeParse({ 
+      name, 
+      location, 
+      phone, 
+      bio, 
+      photoUrl, 
+      experience,
+      petCareInstructions,
+      exerciseRequirements,
+      houseRules,
+      emergencyContacts,
+    });
+    
+    if (!validation.success) {
+      toast({
+        title: "Validation error",
+        description: validation.error.issues[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
