@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 
 const ProfileEdit = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -268,10 +269,10 @@ const ProfileEdit = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="location">Location</Label>
-                      <Input
+                      <LocationAutocomplete
                         id="location"
                         value={location}
-                        onChange={(e) => setLocation(e.target.value)}
+                        onChange={setLocation}
                         placeholder="City, State"
                       />
                     </div>

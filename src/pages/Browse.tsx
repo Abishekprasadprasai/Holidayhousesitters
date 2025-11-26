@@ -9,6 +9,7 @@ import { Loader2, Search, Filter } from "lucide-react";
 import { MapView } from "@/components/MapView";
 import { ProfileCard } from "@/components/ProfileCard";
 import { geocodeLocations, calculateDistance } from "@/utils/geocoding";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import {
   Select,
   SelectContent,
@@ -227,15 +228,11 @@ const Browse = () => {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, location, or suburb..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
+              <LocationAutocomplete
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search by name, location, or suburb..."
+              />
             </div>
             <div className="w-full sm:w-48">
               <Select value={roleFilter} onValueChange={(value: any) => setRoleFilter(value)}>

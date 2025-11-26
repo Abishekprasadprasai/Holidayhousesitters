@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 
 const CreateListing = () => {
   const navigate = useNavigate();
@@ -95,11 +96,11 @@ const CreateListing = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="location">Location *</Label>
-                  <Input
+                  <LocationAutocomplete
                     id="location"
                     required
                     value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    onChange={(value) => setFormData({ ...formData, location: value })}
                     placeholder="e.g., Sydney, NSW"
                   />
                 </div>
