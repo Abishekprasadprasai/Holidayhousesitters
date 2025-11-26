@@ -53,13 +53,14 @@ export function LocationAutocomplete({
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          query + ", Australia"
-        )}&limit=5&countrycodes=au`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/geocode`,
         {
+          method: 'POST',
           headers: {
-            "User-Agent": "HouseSittingApp/1.0",
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
+          body: JSON.stringify({ query }),
         }
       );
 
