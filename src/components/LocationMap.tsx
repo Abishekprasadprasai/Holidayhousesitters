@@ -57,12 +57,14 @@ export const LocationMap = ({ listings }: LocationMapProps) => {
     }
   }, [listings]);
 
+  const mapProps = mapBounds 
+    ? { bounds: mapBounds, center: mapCenter }
+    : { center: mapCenter, zoom: 6 };
+
   return (
     <div className="w-full h-[350px] md:h-[450px] rounded-2xl shadow-md overflow-hidden">
       <MapContainer
-        center={mapCenter}
-        zoom={listings.length > 0 ? undefined : 6}
-        bounds={mapBounds || undefined}
+        {...mapProps}
         className="h-full w-full"
         scrollWheelZoom={false}
       >
@@ -70,7 +72,6 @@ export const LocationMap = ({ listings }: LocationMapProps) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        
         {listings.map((listing) => (
           <Marker
             key={listing.id}
