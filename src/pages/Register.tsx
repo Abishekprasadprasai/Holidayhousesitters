@@ -19,7 +19,7 @@ const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"homeowner" | "sitter" | "admin">("sitter");
+  const [role, setRole] = useState<"homeowner" | "sitter" | "vet_nurse" | "admin">("sitter");
   const [adminCode, setAdminCode] = useState("");
   const [document, setDocument] = useState<File | null>(null);
   const navigate = useNavigate();
@@ -233,6 +233,12 @@ const Register = () => {
                     <RadioGroupItem value="homeowner" id="homeowner" />
                     <Label htmlFor="homeowner" className="font-normal cursor-pointer">
                       Find a sitter for my home/pets
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="vet_nurse" id="vet_nurse" />
+                    <Label htmlFor="vet_nurse" className="font-normal cursor-pointer">
+                      Offer vet support services
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">

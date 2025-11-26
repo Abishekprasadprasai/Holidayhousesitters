@@ -204,15 +204,19 @@ export type Database = {
           created_at: string | null
           document_url: string | null
           emergency_contacts: string | null
+          emergency_services: boolean | null
           exercise_requirements: string | null
           experience: string | null
+          general_advice: boolean | null
           house_rules: string | null
           id: string
           is_paid: boolean | null
           is_verified: boolean | null
           location: string | null
           loyalty_badge: Database["public"]["Enums"]["loyalty_badge"] | null
+          medical_experience: string | null
           medication_needs: boolean | null
+          medication_support: boolean | null
           name: string
           ndis_certified: boolean | null
           number_of_pets: number | null
@@ -226,10 +230,12 @@ export type Database = {
           property_type: string | null
           property_types_cared_for: string[] | null
           skills: string[] | null
+          triage_support: boolean | null
           updated_at: string | null
           user_id: string
           verification_date: string | null
           verified_by_admin_id: string | null
+          vet_service_description: string | null
           wifi_available: boolean | null
           years_experience: string | null
         }
@@ -245,15 +251,19 @@ export type Database = {
           created_at?: string | null
           document_url?: string | null
           emergency_contacts?: string | null
+          emergency_services?: boolean | null
           exercise_requirements?: string | null
           experience?: string | null
+          general_advice?: boolean | null
           house_rules?: string | null
           id?: string
           is_paid?: boolean | null
           is_verified?: boolean | null
           location?: string | null
           loyalty_badge?: Database["public"]["Enums"]["loyalty_badge"] | null
+          medical_experience?: string | null
           medication_needs?: boolean | null
+          medication_support?: boolean | null
           name: string
           ndis_certified?: boolean | null
           number_of_pets?: number | null
@@ -267,10 +277,12 @@ export type Database = {
           property_type?: string | null
           property_types_cared_for?: string[] | null
           skills?: string[] | null
+          triage_support?: boolean | null
           updated_at?: string | null
           user_id: string
           verification_date?: string | null
           verified_by_admin_id?: string | null
+          vet_service_description?: string | null
           wifi_available?: boolean | null
           years_experience?: string | null
         }
@@ -286,15 +298,19 @@ export type Database = {
           created_at?: string | null
           document_url?: string | null
           emergency_contacts?: string | null
+          emergency_services?: boolean | null
           exercise_requirements?: string | null
           experience?: string | null
+          general_advice?: boolean | null
           house_rules?: string | null
           id?: string
           is_paid?: boolean | null
           is_verified?: boolean | null
           location?: string | null
           loyalty_badge?: Database["public"]["Enums"]["loyalty_badge"] | null
+          medical_experience?: string | null
           medication_needs?: boolean | null
+          medication_support?: boolean | null
           name?: string
           ndis_certified?: boolean | null
           number_of_pets?: number | null
@@ -308,10 +324,12 @@ export type Database = {
           property_type?: string | null
           property_types_cared_for?: string[] | null
           skills?: string[] | null
+          triage_support?: boolean | null
           updated_at?: string | null
           user_id?: string
           verification_date?: string | null
           verified_by_admin_id?: string | null
+          vet_service_description?: string | null
           wifi_available?: boolean | null
           years_experience?: string | null
         }
@@ -490,7 +508,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "homeowner" | "sitter"
+      app_role: "admin" | "homeowner" | "sitter" | "vet_nurse"
       booking_status: "pending" | "accepted" | "completed" | "cancelled"
       loyalty_badge: "bronze" | "silver" | "gold"
     }
@@ -620,7 +638,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "homeowner", "sitter"],
+      app_role: ["admin", "homeowner", "sitter", "vet_nurse"],
       booking_status: ["pending", "accepted", "completed", "cancelled"],
       loyalty_badge: ["bronze", "silver", "gold"],
     },

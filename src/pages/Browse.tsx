@@ -27,7 +27,7 @@ type Profile = {
   photo_url?: string;
   skills?: string[];
   is_verified: boolean;
-  role: "sitter" | "homeowner";
+  role: "sitter" | "homeowner" | "vet_nurse";
   lat?: number;
   lng?: number;
 };
@@ -38,7 +38,7 @@ const Browse = () => {
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [geocoding, setGeocoding] = useState(false);
-  const [roleFilter, setRoleFilter] = useState<"all" | "sitter" | "homeowner">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "sitter" | "homeowner" | "vet_nurse">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState<string>();
 
@@ -88,7 +88,7 @@ const Browse = () => {
         .filter((p) => p.location && roleMap.has(p.user_id))
         .map((p) => ({
           ...p,
-          role: roleMap.get(p.user_id) as "sitter" | "homeowner",
+          role: roleMap.get(p.user_id) as "sitter" | "homeowner" | "vet_nurse",
         }));
 
       // Geocode all locations
@@ -244,6 +244,7 @@ const Browse = () => {
                   <SelectItem value="all">All Profiles</SelectItem>
                   <SelectItem value="sitter">Sitters Only</SelectItem>
                   <SelectItem value="homeowner">Homeowners Only</SelectItem>
+                  <SelectItem value="vet_nurse">Vet Nurses Only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
