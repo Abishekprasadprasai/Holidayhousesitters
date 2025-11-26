@@ -1,7 +1,8 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, User } from "lucide-react";
+import { MapPin, User, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type ProfileCardProps = {
   id: string;
@@ -11,6 +12,8 @@ type ProfileCardProps = {
   location?: string;
   photo_url?: string;
   skills?: string[];
+  phone?: string | null;
+  phone_consent?: boolean | null;
   isHighlighted?: boolean;
   onClick: () => void;
 };
@@ -22,9 +25,13 @@ export function ProfileCard({
   location,
   photo_url,
   skills,
+  phone,
+  phone_consent,
   isHighlighted,
   onClick,
 }: ProfileCardProps) {
+  const canShowPhone = role === "vet_nurse" && phone_consent && phone;
+
   return (
     <Card
       className={`cursor-pointer hover:shadow-md transition-all ${
@@ -61,6 +68,22 @@ export function ProfileCard({
           <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
             <MapPin className="h-3 w-3" />
             <span className="truncate">{location}</span>
+          </div>
+        )}
+        {canShowPhone && (
+          <div className="flex items-center gap-2 mb-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full text-xs h-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.location.href = `tel:${phone}`;
+              }}
+            >
+              <Phone className="h-3 w-3 mr-1" />
+              Call for Emergency: {phone}
+            </Button>
           </div>
         )}
         {bio && (

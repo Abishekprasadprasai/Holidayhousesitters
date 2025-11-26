@@ -26,6 +26,8 @@ type Profile = {
   location?: string;
   photo_url?: string;
   skills?: string[];
+  phone?: string | null;
+  phone_consent?: boolean | null;
   is_verified: boolean;
   role: "sitter" | "homeowner" | "vet_nurse";
   lat?: number;
@@ -54,34 +56,35 @@ const Browse = () => {
     try {
       setLoading(true);
 
-      // Fetch all verified and paid profiles
-      const { data: profiles, error: profilesError } = await supabase
+      // Fetch all verified profiles (vet nurses don't need payment, others do)
+      const { data: allVerifiedProfiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("is_verified", true)
-        .eq("is_paid", true);
+        .eq("is_verified", true);
 
       if (profilesError) throw profilesError;
+
+      // Fetch roles for all users
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id, role");
+
+      if (rolesError) throw rolesError;
+
+      // Map roles to profiles
+      const roleMap = new Map(roles?.map((r) => [r.user_id, r.role]) || []);
+
+      // Filter: vet nurses only need verification, others need payment too
+      const profiles = allVerifiedProfiles?.filter((p) => {
+        const role = roleMap.get(p.user_id);
+        return role === 'vet_nurse' || p.is_paid;
+      }) || [];
 
       if (!profiles || profiles.length === 0) {
         setAllProfiles([]);
         setLoading(false);
         return;
       }
-
-      // Fetch roles for all users
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role")
-        .in(
-          "user_id",
-          profiles.map((p) => p.user_id)
-        );
-
-      if (rolesError) throw rolesError;
-
-      // Map roles to profiles
-      const roleMap = new Map(roles?.map((r) => [r.user_id, r.role]) || []);
 
       // Filter profiles that have a role and location
       const profilesWithRole = profiles
@@ -219,9 +222,9 @@ const Browse = () => {
       <main className="flex-1 py-8 bg-muted/50">
         <div className="container">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">Find Sitters & Homeowners</h1>
+            <h1 className="text-3xl font-bold mb-2">Find Sitters, Homeowners & Vet Nurses</h1>
             <p className="text-muted-foreground">
-              Discover trusted sitters and homeowners in your area
+              Discover trusted sitters, homeowners, and vet nurses in your area for emergency support
             </p>
           </div>
 

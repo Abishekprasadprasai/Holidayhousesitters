@@ -53,6 +53,8 @@ type Profile = {
   location?: string;
   photo_url?: string;
   skills?: string[];
+  phone?: string | null;
+  phone_consent?: boolean | null;
   role: "sitter" | "homeowner" | "vet_nurse";
   lat?: number;
   lng?: number;
