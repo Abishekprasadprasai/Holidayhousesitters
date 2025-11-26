@@ -1,6 +1,5 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Icon } from 'leaflet';
-import { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
 type Listing = {
   id: string;
@@ -12,84 +11,49 @@ type Listing = {
 };
 
 interface LocationMapProps {
-  listings: Listing[];
+  listings?: Listing[];
 }
 
-// Custom marker icons
-const houseSitIcon = new Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+const defaultCenter: [number, number] = [-25.2744, 133.7751]; // Australia
 
-const sitterIcon = new Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+function LocationMap({ listings = [] }: LocationMapProps) {
+  const hasListings = listings && listings.length > 0;
 
-export const LocationMap = ({ listings }: LocationMapProps) => {
-  const [mapCenter, setMapCenter] = useState<[number, number]>([-37.8136, 144.9631]); // Melbourne default
-  const [mapBounds, setMapBounds] = useState<[[number, number], [number, number]] | null>(null);
-
-  useEffect(() => {
-    if (listings.length > 0) {
-      // Calculate bounds to fit all markers
-      const lats = listings.map(l => l.latitude);
-      const lngs = listings.map(l => l.longitude);
-      const minLat = Math.min(...lats);
-      const maxLat = Math.max(...lats);
-      const minLng = Math.min(...lngs);
-      const maxLng = Math.max(...lngs);
-      
-      setMapBounds([[minLat, minLng], [maxLat, maxLng]]);
-      
-      // Set center to average of all markers
-      const avgLat = lats.reduce((a, b) => a + b, 0) / lats.length;
-      const avgLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
-      setMapCenter([avgLat, avgLng]);
-    }
-  }, [listings]);
-
-  const mapProps = mapBounds 
-    ? { bounds: mapBounds, center: mapCenter }
-    : { center: mapCenter, zoom: 6 };
+  const center: [number, number] = hasListings
+    ? [listings[0].latitude, listings[0].longitude]
+    : defaultCenter;
 
   return (
-    <div className="w-full h-[350px] md:h-[450px] rounded-2xl shadow-md overflow-hidden">
+    <div className="w-full h-[320px] md:h-[420px] rounded-2xl shadow-md overflow-hidden">
       <MapContainer
-        {...mapProps}
-        className="h-full w-full"
+        center={center}
+        zoom={5}
         scrollWheelZoom={false}
+        className="w-full h-full"
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution="&copy; OpenStreetMap contributors"
         />
-        {listings.map((listing) => (
-          <Marker
-            key={listing.id}
-            position={[listing.latitude, listing.longitude]}
-            icon={listing.type === 'house_sit' ? houseSitIcon : sitterIcon}
-          >
-            <Popup>
-              <div className="p-2">
-                <h3 className="font-semibold text-sm mb-1">{listing.title}</h3>
-                <p className="text-xs text-muted-foreground mb-1">
-                  {listing.type === 'house_sit' ? 'House Sit' : 'Sitter'}
-                </p>
-                <p className="text-xs">{listing.suburb}</p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+
+        {hasListings &&
+          listings.map((listing) => (
+            <Marker
+              key={listing.id}
+              position={[listing.latitude, listing.longitude]}
+            >
+              <Popup>
+                <div className="font-semibold">{listing.title}</div>
+                <div className="text-xs text-muted-foreground">
+                  {listing.type === "house_sit" ? "House Sit" : "Sitter"} –{" "}
+                  {listing.suburb}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
       </MapContainer>
     </div>
   );
-};
+}
+
+export default LocationMap;
