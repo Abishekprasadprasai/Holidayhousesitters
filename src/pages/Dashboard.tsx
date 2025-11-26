@@ -710,53 +710,47 @@ const Dashboard = () => {
                   {profile?.is_verified ? "✓ Verified" : "Pending Verification"}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Payment Status:</span>
-                <span className={`font-semibold ${profile?.is_paid ? 'text-accent' : 'text-muted-foreground'}`}>
-                  {profile?.is_paid ? "✓ Paid" : "Payment Pending"}
-                </span>
-              </div>
+              {role !== 'vet_nurse' && (
+                <div className="flex items-center justify-between">
+                  <span>Payment Status:</span>
+                  <span className={`font-semibold ${profile?.is_paid ? 'text-accent' : 'text-muted-foreground'}`}>
+                    {profile?.is_paid ? "✓ Paid" : "Payment Pending"}
+                  </span>
+                </div>
+              )}
               {!profile?.is_verified && (
                 <p className="text-sm text-muted-foreground">
                   {role === 'vet_nurse' 
-                    ? "Our team will verify your documents, and we'll contact you to discuss payment arrangements."
+                    ? "Our team will verify your documents. Once verified, you'll have full access to the platform."
                     : "Our team will verify your documents before you can proceed with payment."}
                 </p>
               )}
             </CardContent>
           </Card>
 
-          {/* Payment Prompt - Different for vet nurses vs others */}
-          {profile?.is_verified && !profile?.is_paid && (
+          {/* Payment Prompt - Only for non-vet-nurse roles */}
+          {role !== 'vet_nurse' && profile?.is_verified && !profile?.is_paid && (
             <Card className="border-orange-200 bg-orange-50">
               <CardHeader>
-                <CardTitle className="text-orange-900">
-                  {role === 'vet_nurse' ? 'Payment Arrangements' : 'Complete Your Membership'}
-                </CardTitle>
+                <CardTitle className="text-orange-900">Complete Your Membership</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {role === 'vet_nurse' ? (
-                  <p className="text-sm text-orange-800">
-                    Great news! Your account has been verified. We'll contact you shortly to discuss payment arrangements. Once payment is confirmed, you'll have full access to the platform.
-                  </p>
-                ) : (
-                  <>
-                    <p className="text-sm text-orange-800">
-                      Great news! Your account has been verified. Complete your annual membership payment to access all features and start connecting with homeowners and sitters.
-                    </p>
-                    <Button 
-                      className="w-full"
-                      onClick={async () => {
-                        try {
-                          const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
-                            "create-checkout"
-                          );
+                <p className="text-sm text-orange-800">
+                  Great news! Your account has been verified. Complete your annual membership payment to access all features and start connecting with homeowners and sitters.
+                </p>
+                <Button 
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+                        "create-checkout"
+                      );
 
-                          if (checkoutError) throw checkoutError;
+                      if (checkoutError) throw checkoutError;
 
-                          if (checkoutData?.url) {
-                            window.open(checkoutData.url, '_blank');
-                          }
+                      if (checkoutData?.url) {
+                        window.open(checkoutData.url, '_blank');
+                      }
                     } catch (error: any) {
                       toast({
                         title: "Error",
@@ -768,11 +762,9 @@ const Dashboard = () => {
                 >
                   Complete Payment
                 </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Quick Actions */}
           <div className="grid md:grid-cols-2 gap-6">
@@ -796,7 +788,7 @@ const Dashboard = () => {
                   <CardHeader>
                     <CardTitle>Post a Listing</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">
                       {profile?.is_verified && profile?.is_paid 
                         ? "Create a new house sitting opportunity"
@@ -837,17 +829,39 @@ const Dashboard = () => {
                   <CardTitle>Find Sits</CardTitle>
                 </CardHeader>
                 <CardContent>
+                   <p className="text-sm text-muted-foreground mb-4">
+                     {profile?.is_verified && profile?.is_paid 
+                       ? "Browse available house sitting opportunities"
+                       : "Complete verification and payment to apply for sits"}
+                   </p>
+                   <Button 
+                     className="w-full"
+                     disabled={!profile?.is_verified || !profile?.is_paid}
+                     onClick={() => navigate("/listings")}
+                   >
+                    Browse Listings
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {role === "vet_nurse" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Browse House Sits</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {profile?.is_verified && profile?.is_paid 
-                      ? "Browse available house sitting opportunities"
-                      : "Complete verification and payment to apply for sits"}
+                    {profile?.is_verified 
+                      ? "View house sits where your vet services may be needed"
+                      : "Complete verification to view listings"}
                   </p>
                   <Button 
                     className="w-full"
-                    disabled={!profile?.is_verified || !profile?.is_paid}
+                    disabled={!profile?.is_verified}
                     onClick={() => navigate("/listings")}
                   >
-                    Browse Listings
+                    View Listings
                   </Button>
                 </CardContent>
               </Card>

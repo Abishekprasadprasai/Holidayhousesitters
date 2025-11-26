@@ -185,7 +185,7 @@ const Register = () => {
 
       // Registration successful - different messages for vet nurses vs others
       const successMessage = role === "vet_nurse" 
-        ? "Your account has been created. An admin will verify your documents, and we'll contact you to discuss payment arrangements."
+        ? "Your account has been created. An admin will verify your documents, and once verified, you'll have full access to the platform."
         : "Your account has been created. An admin will verify your documents, then you can complete payment to access all features.";
       
       toast({
