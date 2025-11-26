@@ -183,10 +183,14 @@ const Register = () => {
         return;
       }
 
-      // Registration successful - user needs to wait for verification before payment
+      // Registration successful - different messages for vet nurses vs others
+      const successMessage = role === "vet_nurse" 
+        ? "Your account has been created. An admin will verify your documents, and we'll contact you to discuss payment arrangements."
+        : "Your account has been created. An admin will verify your documents, then you can complete payment to access all features.";
+      
       toast({
         title: "Registration successful!",
-        description: "Your account has been created. An admin will verify your documents, then you can complete payment to access all features.",
+        description: successMessage,
       });
 
       setTimeout(() => {

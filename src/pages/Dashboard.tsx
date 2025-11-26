@@ -718,35 +718,45 @@ const Dashboard = () => {
               </div>
               {!profile?.is_verified && (
                 <p className="text-sm text-muted-foreground">
-                  Our team will verify your documents before you can proceed with payment.
+                  {role === 'vet_nurse' 
+                    ? "Our team will verify your documents, and we'll contact you to discuss payment arrangements."
+                    : "Our team will verify your documents before you can proceed with payment."}
                 </p>
               )}
             </CardContent>
           </Card>
 
-          {/* Payment Prompt - Only show if verified but not paid */}
+          {/* Payment Prompt - Different for vet nurses vs others */}
           {profile?.is_verified && !profile?.is_paid && (
             <Card className="border-orange-200 bg-orange-50">
               <CardHeader>
-                <CardTitle className="text-orange-900">Complete Your Membership</CardTitle>
+                <CardTitle className="text-orange-900">
+                  {role === 'vet_nurse' ? 'Payment Arrangements' : 'Complete Your Membership'}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-orange-800">
-                  Great news! Your account has been verified. Complete your annual membership payment to access all features and start connecting with homeowners and sitters.
-                </p>
-                <Button 
-                  className="w-full"
-                  onClick={async () => {
-                    try {
-                      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
-                        "create-checkout"
-                      );
+                {role === 'vet_nurse' ? (
+                  <p className="text-sm text-orange-800">
+                    Great news! Your account has been verified. We'll contact you shortly to discuss payment arrangements. Once payment is confirmed, you'll have full access to the platform.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-sm text-orange-800">
+                      Great news! Your account has been verified. Complete your annual membership payment to access all features and start connecting with homeowners and sitters.
+                    </p>
+                    <Button 
+                      className="w-full"
+                      onClick={async () => {
+                        try {
+                          const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+                            "create-checkout"
+                          );
 
-                      if (checkoutError) throw checkoutError;
+                          if (checkoutError) throw checkoutError;
 
-                      if (checkoutData?.url) {
-                        window.open(checkoutData.url, '_blank');
-                      }
+                          if (checkoutData?.url) {
+                            window.open(checkoutData.url, '_blank');
+                          }
                     } catch (error: any) {
                       toast({
                         title: "Error",
@@ -758,9 +768,11 @@ const Dashboard = () => {
                 >
                   Complete Payment
                 </Button>
-              </CardContent>
-            </Card>
-          )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
           {/* Quick Actions */}
           <div className="grid md:grid-cols-2 gap-6">
