@@ -11,8 +11,33 @@ serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json();
+    const { query, lat, lon } = await req.json();
     
+    // Reverse geocoding (coordinates to location)
+    if (lat !== undefined && lon !== undefined) {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+        {
+          headers: {
+            "User-Agent": "HouseSittingApp/1.0",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Reverse geocoding service error');
+      }
+
+      const data = await response.json();
+      return new Response(
+        JSON.stringify(data),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    // Forward geocoding (location to coordinates)
     if (!query || query.length < 2) {
       return new Response(
         JSON.stringify({ error: 'Query must be at least 2 characters' }),
