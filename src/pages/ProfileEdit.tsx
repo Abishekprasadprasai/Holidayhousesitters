@@ -22,7 +22,7 @@ import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 
 const ProfileEdit = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [userRole, setUserRole] = useState<"homeowner" | "sitter" | null>(null);
+  const [userRole, setUserRole] = useState<"homeowner" | "sitter" | "vet_nurse" | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -44,6 +44,14 @@ const ProfileEdit = () => {
   const [animalsCaredFor, setAnimalsCaredFor] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [experience, setExperience] = useState("");
+
+  // Vet Nurse fields
+  const [medicalExperience, setMedicalExperience] = useState("");
+  const [emergencyServices, setEmergencyServices] = useState(false);
+  const [medicationSupport, setMedicationSupport] = useState(false);
+  const [triageSupport, setTriageSupport] = useState(false);
+  const [generalAdvice, setGeneralAdvice] = useState(false);
+  const [vetServiceDescription, setVetServiceDescription] = useState("");
 
   // Homeowner fields
   const [propertyType, setPropertyType] = useState("");
@@ -77,7 +85,7 @@ const ProfileEdit = () => {
         .single();
 
       if (roleData) {
-        setUserRole(roleData.role as "homeowner" | "sitter");
+        setUserRole(roleData.role as "homeowner" | "sitter" | "vet_nurse");
       }
 
       const { data: profile } = await supabase
@@ -111,6 +119,14 @@ const ProfileEdit = () => {
         setHouseRules(profile.house_rules || "");
         setEmergencyContacts(profile.emergency_contacts || "");
         setAvailabilityFlexible(profile.availability_flexible || false);
+        
+        // Load vet nurse fields
+        setMedicalExperience(profile.medical_experience || "");
+        setEmergencyServices(profile.emergency_services || false);
+        setMedicationSupport(profile.medication_support || false);
+        setTriageSupport(profile.triage_support || false);
+        setGeneralAdvice(profile.general_advice || false);
+        setVetServiceDescription(profile.vet_service_description || "");
         
         if (profile.availability_start) {
           setAvailabilityStart(new Date(profile.availability_start));
@@ -192,6 +208,18 @@ const ProfileEdit = () => {
         updateData.animals_cared_for = animalsCaredFor;
         updateData.skills = skills;
         updateData.experience = experience;
+      } else if (userRole === "vet_nurse") {
+        updateData.medical_experience = medicalExperience;
+        updateData.emergency_services = emergencyServices;
+        updateData.medication_support = medicationSupport;
+        updateData.triage_support = triageSupport;
+        updateData.general_advice = generalAdvice;
+        updateData.vet_service_description = vetServiceDescription;
+        updateData.skills = skills;
+        updateData.experience = experience;
+        updateData.availability_start = availabilityStart?.toISOString().split('T')[0];
+        updateData.availability_end = availabilityEnd?.toISOString().split('T')[0];
+        updateData.availability_flexible = availabilityFlexible;
       } else if (userRole === "homeowner") {
         updateData.property_type = propertyType;
         updateData.bedrooms_bathrooms = bedroomsBathrooms;
@@ -247,7 +275,7 @@ const ProfileEdit = () => {
           <Card>
             <CardHeader>
               <CardTitle>
-                {userRole === "sitter" ? "Sitter Profile" : "Homeowner Profile"}
+                {userRole === "sitter" ? "Sitter Profile" : userRole === "vet_nurse" ? "Vet Nurse Profile" : "Homeowner Profile"}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -496,6 +524,179 @@ const ProfileEdit = () => {
                           value={experience}
                           onChange={(e) => setExperience(e.target.value)}
                           placeholder="Describe your experience..."
+                          rows={4}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Vet Nurse-specific fields */}
+                {userRole === "vet_nurse" && (
+                  <>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Medical Experience</h3>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="medical-experience">Professional Background</Label>
+                        <Textarea
+                          id="medical-experience"
+                          value={medicalExperience}
+                          onChange={(e) => setMedicalExperience(e.target.value)}
+                          placeholder="Describe your veterinary qualifications, training, and experience..."
+                          rows={4}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="vet-description">Service Description</Label>
+                        <Textarea
+                          id="vet-description"
+                          value={vetServiceDescription}
+                          onChange={(e) => setVetServiceDescription(e.target.value)}
+                          placeholder="Describe the specific services you offer to pet owners..."
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Services Offered</h3>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="medication-support"
+                            checked={medicationSupport}
+                            onCheckedChange={(checked) => setMedicationSupport(checked as boolean)}
+                          />
+                          <Label htmlFor="medication-support">Medication Support & Administration</Label>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="emergency-services"
+                            checked={emergencyServices}
+                            onCheckedChange={(checked) => setEmergencyServices(checked as boolean)}
+                          />
+                          <Label htmlFor="emergency-services">Emergency Services & Consultation</Label>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="triage-support"
+                            checked={triageSupport}
+                            onCheckedChange={(checked) => setTriageSupport(checked as boolean)}
+                          />
+                          <Label htmlFor="triage-support">Triage & Assessment</Label>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="general-advice"
+                            checked={generalAdvice}
+                            onCheckedChange={(checked) => setGeneralAdvice(checked as boolean)}
+                          />
+                          <Label htmlFor="general-advice">General Pet Health Advice</Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Availability</h3>
+                      
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Start Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !availabilityStart && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {availabilityStart ? format(availabilityStart, "PPP") : "Pick a date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={availabilityStart}
+                                onSelect={setAvailabilityStart}
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>End Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !availabilityEnd && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {availabilityEnd ? format(availabilityEnd, "PPP") : "Pick a date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={availabilityEnd}
+                                onSelect={setAvailabilityEnd}
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="flexible-vet"
+                          checked={availabilityFlexible}
+                          onCheckedChange={(checked) => setAvailabilityFlexible(checked as boolean)}
+                        />
+                        <Label htmlFor="flexible-vet">Dates are flexible</Label>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Additional Information</h3>
+                      
+                      <div className="space-y-2">
+                        <Label>Certifications & Qualifications</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {["Vet Nurse Cert", "First Aid", "Emergency Care", "Medication Admin"].map((cert) => (
+                            <div key={cert} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`cert-${cert}`}
+                                checked={skills.includes(cert)}
+                                onCheckedChange={() => toggleArrayItem(skills, setSkills, cert)}
+                              />
+                              <Label htmlFor={`cert-${cert}`} className="text-sm">{cert}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="vet-experience">Professional Experience</Label>
+                        <Textarea
+                          id="vet-experience"
+                          value={experience}
+                          onChange={(e) => setExperience(e.target.value)}
+                          placeholder="Describe your veterinary experience and specializations..."
                           rows={4}
                         />
                       </div>

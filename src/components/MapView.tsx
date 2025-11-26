@@ -34,6 +34,17 @@ const homeownerIcon = new L.Icon({
   className: "hue-rotate-[120deg]", // Green tint for homeowners
 });
 
+const vetNurseIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+  className: "hue-rotate-[300deg]", // Purple/pink tint for vet nurses
+});
+
 type Profile = {
   id: string;
   user_id: string;
@@ -42,7 +53,7 @@ type Profile = {
   location?: string;
   photo_url?: string;
   skills?: string[];
-  role: "sitter" | "homeowner";
+  role: "sitter" | "homeowner" | "vet_nurse";
   lat?: number;
   lng?: number;
 };
@@ -99,7 +110,7 @@ export function MapView({ profiles, selectedProfileId, onProfileClick }: MapView
 
     validProfiles.forEach((profile) => {
       const marker = L.marker([profile.lat!, profile.lng!], {
-        icon: profile.role === "sitter" ? sitterIcon : homeownerIcon,
+        icon: profile.role === "sitter" ? sitterIcon : profile.role === "vet_nurse" ? vetNurseIcon : homeownerIcon,
         opacity: selectedProfileId && selectedProfileId !== profile.id ? 0.7 : 1,
       }).addTo(layer);
 

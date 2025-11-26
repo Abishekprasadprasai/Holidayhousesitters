@@ -6,7 +6,7 @@ import { MapPin, User } from "lucide-react";
 type ProfileCardProps = {
   id: string;
   name: string;
-  role: "sitter" | "homeowner";
+  role: "sitter" | "homeowner" | "vet_nurse";
   bio?: string;
   location?: string;
   photo_url?: string;
@@ -48,10 +48,10 @@ export function ProfileCard({
           <div className="flex-1 min-w-0">
             <CardTitle className="text-base mb-1 truncate">{name}</CardTitle>
             <Badge
-              variant={role === "sitter" ? "default" : "secondary"}
+              variant={role === "sitter" ? "default" : role === "vet_nurse" ? "outline" : "secondary"}
               className="text-xs"
             >
-              {role === "sitter" ? "Sitter" : "Homeowner"}
+              {role === "sitter" ? "Sitter" : role === "vet_nurse" ? "Vet Nurse" : "Homeowner"}
             </Badge>
           </div>
         </div>
