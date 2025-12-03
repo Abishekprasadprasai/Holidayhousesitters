@@ -710,7 +710,7 @@ const Dashboard = () => {
                   {profile?.is_verified ? "✓ Verified" : "Pending Verification"}
                 </span>
               </div>
-              {role !== 'vet_nurse' && (
+              {role === 'homeowner' && (
                 <div className="flex items-center justify-between">
                   <span>Payment Status:</span>
                   <span className={`font-semibold ${profile?.is_paid ? 'text-accent' : 'text-muted-foreground'}`}>
@@ -728,8 +728,8 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Payment Prompt - Only for non-vet-nurse roles */}
-          {role !== 'vet_nurse' && profile?.is_verified && !profile?.is_paid && (
+          {/* Payment Prompt - Only for homeowners */}
+          {role === 'homeowner' && profile?.is_verified && !profile?.is_paid && (
             <Card className="border-orange-200 bg-orange-50">
               <CardHeader>
                 <CardTitle className="text-orange-900">Complete Your Membership</CardTitle>
@@ -830,13 +830,13 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                    <p className="text-sm text-muted-foreground mb-4">
-                     {profile?.is_verified && profile?.is_paid 
+                     {profile?.is_verified 
                        ? "Browse available house sitting opportunities"
-                       : "Complete verification and payment to apply for sits"}
+                       : "Complete verification to apply for sits"}
                    </p>
                    <Button 
                      className="w-full"
-                     disabled={!profile?.is_verified || !profile?.is_paid}
+                     disabled={!profile?.is_verified}
                      onClick={() => navigate("/listings")}
                    >
                     Browse Listings
