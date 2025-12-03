@@ -502,6 +502,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_user_verified: { Args: { _user_id: string }; Returns: boolean }
       reject_admin_request: {
         Args: { rejection_notes?: string; request_id: string }
         Returns: undefined
