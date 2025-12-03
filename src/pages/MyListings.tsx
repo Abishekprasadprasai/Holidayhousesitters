@@ -5,9 +5,18 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Calendar, MapPin, Users } from "lucide-react";
+import { Loader2, Calendar, MapPin, Users, MessageSquare, Send } from "lucide-react";
 import { format } from "date-fns";
 
 const MyListings = () => {
@@ -17,6 +26,15 @@ const MyListings = () => {
   const [listings, setListings] = useState<any[]>([]);
   const [applicants, setApplicants] = useState<Record<string, any[]>>({});
   const [updatingBooking, setUpdatingBooking] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Chat state
+  const [chatOpen, setChatOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
   useEffect(() => {
     fetchListingsAndApplicants();
@@ -29,6 +47,7 @@ const MyListings = () => {
         navigate("/login");
         return;
       }
+      setCurrentUser(user);
 
       // Fetch listings
       const { data: listingsData, error: listingsError } = await supabase
@@ -81,6 +100,57 @@ const MyListings = () => {
         variant: "destructive",
       });
       setIsLoading(false);
+    }
+  };
+
+  const loadMessages = async (bookingId: string) => {
+    setLoadingMessages(true);
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (error) {
+      console.error("Error loading messages:", error);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const handleOpenChat = async (booking: any) => {
+    setSelectedBooking(booking);
+    setChatOpen(true);
+    await loadMessages(booking.id);
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedBooking || !currentUser) return;
+
+    setSendingMessage(true);
+    try {
+      const { error } = await supabase.from("messages").insert({
+        booking_id: selectedBooking.id,
+        sender_id: currentUser.id,
+        content: newMessage.trim(),
+      });
+
+      if (error) throw error;
+
+      setNewMessage("");
+      await loadMessages(selectedBooking.id);
+    } catch (error: any) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -267,6 +337,15 @@ const MyListings = () => {
                                   </Button>
                                 </div>
                               )}
+                              {booking.status === "accepted" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleOpenChat(booking)}
+                                >
+                                  <MessageSquare className="h-4 w-4 mr-1" />
+                                  Chat
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -284,6 +363,76 @@ const MyListings = () => {
         </div>
       </main>
       
+      {/* Chat Dialog */}
+      <Dialog open={chatOpen} onOpenChange={setChatOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Chat with {selectedBooking?.sitter?.name || "Sitter"}</DialogTitle>
+            <DialogDescription>
+              Discuss details about the house sitting arrangement.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="h-64 overflow-y-auto border rounded-lg p-3 space-y-3 bg-muted/30">
+            {loadingMessages ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : messages.length === 0 ? (
+              <p className="text-center text-muted-foreground text-sm">
+                No messages yet. Start the conversation!
+              </p>
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender_id === currentUser?.id ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[70%] rounded-lg px-3 py-2 ${
+                      msg.sender_id === currentUser?.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    }`}
+                  >
+                    <p className="text-sm">{msg.content}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {format(new Date(msg.created_at), "h:mm a")}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <Textarea
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="resize-none"
+              rows={2}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+            />
+            <Button
+              onClick={handleSendMessage}
+              disabled={sendingMessage || !newMessage.trim()}
+            >
+              {sendingMessage ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );
