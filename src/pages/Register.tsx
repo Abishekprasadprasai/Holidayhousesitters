@@ -12,15 +12,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload } from "lucide-react";
 import { z } from "zod";
 
-const ADMIN_CODE = "8823";
-
 const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"homeowner" | "sitter" | "vet_nurse" | "admin">("sitter");
-  const [adminCode, setAdminCode] = useState("");
   const [document, setDocument] = useState<File | null>(null);
   const [vetExperience, setVetExperience] = useState<string>("");
   const navigate = useNavigate();
@@ -28,18 +25,6 @@ const Register = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate admin code if admin role is selected
-    if (role === "admin") {
-      if (adminCode.trim() !== ADMIN_CODE) {
-        toast({
-          title: "Invalid admin code",
-          description: "The admin access code you entered is incorrect.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
     
     // Validate vet nurse experience
     if (role === "vet_nurse") {
@@ -76,22 +61,24 @@ const Register = () => {
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
     
-    if (document.size > MAX_FILE_SIZE) {
-      toast({
-        title: "File too large",
-        description: "File size must be less than 5MB",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!ALLOWED_TYPES.includes(document.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a JPG, PNG, or PDF file",
-        variant: "destructive",
-      });
-      return;
+    if (document) {
+      if (document.size > MAX_FILE_SIZE) {
+        toast({
+          title: "File too large",
+          description: "File size must be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!ALLOWED_TYPES.includes(document.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a JPG, PNG, or PDF file",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Input validation using zod
@@ -163,7 +150,7 @@ const Register = () => {
         if (updateError) throw updateError;
       }
 
-      // Handle admin signup separately
+      // Handle admin signup separately - requires approval
       if (role === "admin") {
         // Submit admin request for manual approval
         const { error: adminRequestError } = await supabase
@@ -284,26 +271,17 @@ const Register = () => {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="admin" id="admin" />
                     <Label htmlFor="admin" className="font-normal cursor-pointer">
-                      Administrator (Requires Code)
+                      Administrator (Requires Approval)
                     </Label>
                   </div>
                 </RadioGroup>
               </div>
 
               {role === "admin" && (
-                <div className="space-y-2">
-                  <Label htmlFor="adminCode">Admin Access Code *</Label>
-                  <Input
-                    id="adminCode"
-                    type="password"
-                    placeholder="Enter admin code"
-                    value={adminCode}
-                    onChange={(e) => setAdminCode(e.target.value)}
-                    required
-                    maxLength={20}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Enter the admin access code to proceed with admin registration
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-sm text-muted-foreground">
+                    Admin access requests require approval from an existing administrator. 
+                    You will be notified once your request has been reviewed.
                   </p>
                 </div>
               )}
