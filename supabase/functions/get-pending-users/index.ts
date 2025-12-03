@@ -65,8 +65,24 @@ serve(async (req) => {
         // Get email from auth.users
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
 
+        // Generate signed URL for document if it exists
+        let signedDocumentUrl = null;
+        if (profile.document_url) {
+          // Extract the file path from the full URL or use the path directly
+          const documentPath = profile.document_url.includes('identity-documents/')
+            ? profile.document_url.split('identity-documents/')[1]
+            : profile.document_url;
+          
+          const { data: signedData } = await supabaseAdmin.storage
+            .from("identity-documents")
+            .createSignedUrl(documentPath, 3600); // 1 hour expiry
+          
+          signedDocumentUrl = signedData?.signedUrl || null;
+        }
+
         return {
           ...profile,
+          document_url: signedDocumentUrl,
           email: authUser.user?.email || "N/A",
           role: userRoleData?.role || "N/A",
         };
