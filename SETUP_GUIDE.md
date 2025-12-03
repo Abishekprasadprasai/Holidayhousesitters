@@ -149,7 +149,7 @@ npm run build
 1. **Homeowner** - Creates house sit listings, requires payment ($75/year)
 2. **Sitter** - Applies to listings, no payment required
 3. **Vet Nurse** - Provides pet support services, no payment required
-4. **Admin** - Verifies users, manages platform (signup code: 8823)
+4. **Admin** - Verifies users, manages platform
 
 ---
 
