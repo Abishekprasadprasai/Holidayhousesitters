@@ -1,59 +1,45 @@
-# Welcome to your holiday house sitters project
+# 🏡 Holiday House Sitters — Project Overview
 
-## Project info
+This repository contains the frontend codebase for the **Holiday House Sitters** platform — a modern, responsive web application designed to connect homeowners with reliable and verified house sitters. It is built with scalable, industry-standard technologies and is structured for easy handover to any IT professional.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
+## 📦 Tech Stack
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **React (TypeScript)** — component-based UI development  
+- **Vite** — fast build system and dev server  
+- **Tailwind CSS** — utility-first styling  
+- **shadcn-ui** — prebuilt, accessible UI components  
+- **Supabase** — backend services (database, authentication, and storage)
 
-## Can I connect a custom domain to my housesitters project?
+---
 
-Yes, you can!
+## 🛠️ Development Setup
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Before running or modifying the project, ensure the following are installed:
+
+- Node.js v18 or later  
+- npm or bun  
+- Git  
+- (Optional) Supabase account for backend integration  
+
+---
+
+## 🚀 Getting Started (Local Development)
+
+Follow these steps to run the project locally:
+
+```sh
+# 1. Clone the repository
+git clone <REPOSITORY_URL>
+
+# 2. Navigate into the project directory
+cd <PROJECT_NAME>
+
+# 3. Install all dependencies
+npm install
+
+# 4. Start the development server
+npm run dev
