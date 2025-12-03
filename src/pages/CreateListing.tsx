@@ -22,10 +22,52 @@ const CreateListing = () => {
     location: "",
     startDate: "",
     endDate: "",
-    pets: "",
-    tasks: "",
     requirements: "",
   });
+  
+  const [pets, setPets] = useState([{ type: "", name: "", age: "", notes: "" }]);
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [customTask, setCustomTask] = useState("");
+
+  const commonTasks = [
+    "Feed pets",
+    "Water plants",
+    "Collect mail",
+    "Take out bins",
+    "Mow lawn",
+    "Clean pool",
+    "Walk dogs",
+    "Give medication",
+  ];
+
+  const addPet = () => {
+    setPets([...pets, { type: "", name: "", age: "", notes: "" }]);
+  };
+
+  const removePet = (index: number) => {
+    if (pets.length > 1) {
+      setPets(pets.filter((_, i) => i !== index));
+    }
+  };
+
+  const updatePet = (index: number, field: string, value: string) => {
+    const updated = [...pets];
+    updated[index] = { ...updated[index], [field]: value };
+    setPets(updated);
+  };
+
+  const toggleTask = (task: string) => {
+    setSelectedTasks(prev =>
+      prev.includes(task) ? prev.filter(t => t !== task) : [...prev, task]
+    );
+  };
+
+  const addCustomTask = () => {
+    if (customTask.trim() && !selectedTasks.includes(customTask.trim())) {
+      setSelectedTasks([...selectedTasks, customTask.trim()]);
+      setCustomTask("");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +80,9 @@ const CreateListing = () => {
         return;
       }
 
+      // Filter out empty pets
+      const validPets = pets.filter(p => p.type || p.name);
+      
       const { error } = await supabase.from("listings").insert({
         owner_id: user.id,
         title: formData.title,
@@ -45,8 +90,8 @@ const CreateListing = () => {
         location: formData.location,
         start_date: formData.startDate,
         end_date: formData.endDate,
-        pets: formData.pets ? JSON.parse(formData.pets) : null,
-        tasks: formData.tasks ? formData.tasks.split(",").map(t => t.trim()) : [],
+        pets: validPets.length > 0 ? validPets : null,
+        tasks: selectedTasks.length > 0 ? selectedTasks : [],
         requirements: formData.requirements,
         status: "active",
       });
@@ -141,28 +186,107 @@ const CreateListing = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="pets">Pets (JSON format)</Label>
-                  <Textarea
-                    id="pets"
-                    value={formData.pets}
-                    onChange={(e) => setFormData({ ...formData, pets: e.target.value })}
-                    placeholder='{"type": "dog", "name": "Max", "age": 5}'
-                    rows={2}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Enter pet details in JSON format (optional)
-                  </p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Pets (optional)</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addPet}>
+                      Add Another Pet
+                    </Button>
+                  </div>
+                  {pets.map((pet, index) => (
+                    <div key={index} className="p-4 border rounded-lg space-y-3 bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Pet {index + 1}</span>
+                        {pets.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removePet(index)}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Type</Label>
+                          <Input
+                            placeholder="e.g., Dog, Cat"
+                            value={pet.type}
+                            onChange={(e) => updatePet(index, "type", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Name</Label>
+                          <Input
+                            placeholder="Pet name"
+                            value={pet.name}
+                            onChange={(e) => updatePet(index, "name", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Age</Label>
+                          <Input
+                            placeholder="e.g., 5 years"
+                            value={pet.age}
+                            onChange={(e) => updatePet(index, "age", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Special Notes</Label>
+                          <Input
+                            placeholder="Any special needs"
+                            value={pet.notes}
+                            onChange={(e) => updatePet(index, "notes", e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="tasks">Tasks (comma-separated)</Label>
-                  <Input
-                    id="tasks"
-                    value={formData.tasks}
-                    onChange={(e) => setFormData({ ...formData, tasks: e.target.value })}
-                    placeholder="e.g., Feed pets, Water plants, Collect mail"
-                  />
+                <div className="space-y-3">
+                  <Label>Tasks Required</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {commonTasks.map((task) => (
+                      <Button
+                        key={task}
+                        type="button"
+                        variant={selectedTasks.includes(task) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleTask(task)}
+                      >
+                        {task}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add custom task..."
+                      value={customTask}
+                      onChange={(e) => setCustomTask(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addCustomTask())}
+                    />
+                    <Button type="button" variant="outline" onClick={addCustomTask}>
+                      Add
+                    </Button>
+                  </div>
+                  {selectedTasks.filter(t => !commonTasks.includes(t)).length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTasks.filter(t => !commonTasks.includes(t)).map((task) => (
+                        <Button
+                          key={task}
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => toggleTask(task)}
+                        >
+                          {task} ✕
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
